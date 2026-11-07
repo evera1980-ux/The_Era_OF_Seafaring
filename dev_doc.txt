@@ -1,0 +1,2798 @@
+
+《远洋纪元：真实海域》
+多 Agent 并行开发技术规范与全目录文件级架构文档
+Era of Seafaring: Live Ocean · Architecture Specification v1.0 · TypeScript Strict Mode
+架构设计总原则
+本项目采用 Contract-First（契约优先）+ Slice-Based（状态切片）+ Pure-Function Core（纯函数核心）+ Feature Ownership（功能文件所有权） 的架构。
+针对低参数 Coding LLM 与多个并行 Agent，重点解决四个问题：
+Agent 不理解其他 Agent 的内部实现，仍能独立开发。  
+Agent 之间不能同时修改同一个文件。  
+每个模块可以使用 Mock 实现独立单元测试。  
+程序化美术资源可以无业务代码修改地替换为正式美术资产。  
+核心技术栈锁定
+分类
+技术
+版本约束
+构建
+Vite
+6.x
+UI
+React
+18.x
+语言
+TypeScript
+5.x
+类型检查
+Strict Mode
+必须开启
+状态管理
+Zustand
+5.x
+状态不可变更新
+Immer
+10.x
+存档
+Zustand Persist
+使用对应 Middleware
+CSS
+Tailwind CSS
+3.x
+地图
+MapLibre GL JS
+5.x
+GIS 图层
+Deck.gl
+9.x
+球面计算
+Turf.js
+7.x
+原生桥接
+Capacitor
+7.x
+图标
+Lucide React
+锁定依赖版本
+单元测试
+Vitest
+3.x
+UI 测试
+Testing Library
+React 组件测试
+E2E
+Playwright
+Web 端验收
+版本表是工程初始基线，具体 patch 版本应由 package-lock.json 锁定，所有 Agent 不得自行升级依赖。
+一、整体系统架构
+#chatgpt-mermaid-_r_i8_{font-family:-apple-system,"system-ui","Segoe UI",sans-serif;font-size:14px;fill:rgb(255, 255, 255);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-_r_i8_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-_r_i8_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-_r_i8_ .error-icon{fill:rgba(255, 255, 255, 0.03);}#chatgpt-mermaid-_r_i8_ .error-text{fill:rgb(255, 255, 255);stroke:rgb(255, 255, 255);}#chatgpt-mermaid-_r_i8_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-_r_i8_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-_r_i8_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-_r_i8_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-_r_i8_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-_r_i8_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-_r_i8_ .marker{fill:rgba(255, 255, 255, 0.498);stroke:rgba(255, 255, 255, 0.498);}#chatgpt-mermaid-_r_i8_ .marker.cross{stroke:rgba(255, 255, 255, 0.498);}#chatgpt-mermaid-_r_i8_ svg{font-family:-apple-system,"system-ui","Segoe UI",sans-serif;font-size:14px;}#chatgpt-mermaid-_r_i8_ p{margin:0;}#chatgpt-mermaid-_r_i8_ .label{font-family:-apple-system,"system-ui","Segoe UI",sans-serif;color:rgb(255, 255, 255);}#chatgpt-mermaid-_r_i8_ .cluster-label text{fill:rgb(255, 255, 255);}#chatgpt-mermaid-_r_i8_ .cluster-label span{color:rgb(255, 255, 255);}#chatgpt-mermaid-_r_i8_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-_r_i8_ .label text,#chatgpt-mermaid-_r_i8_ span{fill:rgb(255, 255, 255);color:rgb(255, 255, 255);}#chatgpt-mermaid-_r_i8_ .node rect,#chatgpt-mermaid-_r_i8_ .node circle,#chatgpt-mermaid-_r_i8_ .node ellipse,#chatgpt-mermaid-_r_i8_ .node polygon,#chatgpt-mermaid-_r_i8_ .node path{fill:rgb(26, 40, 61);stroke:rgb(31, 78, 148);stroke-width:1px;}#chatgpt-mermaid-_r_i8_ .rough-node .label text,#chatgpt-mermaid-_r_i8_ .node .label text,#chatgpt-mermaid-_r_i8_ .image-shape .label,#chatgpt-mermaid-_r_i8_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-_r_i8_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-_r_i8_ .rough-node .label,#chatgpt-mermaid-_r_i8_ .node .label,#chatgpt-mermaid-_r_i8_ .image-shape .label,#chatgpt-mermaid-_r_i8_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-_r_i8_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-_r_i8_ .root .anchor path{fill:rgba(255, 255, 255, 0.498)!important;stroke-width:0;stroke:rgba(255, 255, 255, 0.498);}#chatgpt-mermaid-_r_i8_ .arrowheadPath{fill:rgba(255, 255, 255, 0.498);}#chatgpt-mermaid-_r_i8_ .edgePath .path{stroke:rgba(255, 255, 255, 0.498);stroke-width:1px;}#chatgpt-mermaid-_r_i8_ .flowchart-link{stroke:rgba(255, 255, 255, 0.498);fill:none;}#chatgpt-mermaid-_r_i8_ .edgeLabel{background-color:rgb(24, 24, 24);text-align:center;}#chatgpt-mermaid-_r_i8_ .edgeLabel p{background-color:rgb(24, 24, 24);}#chatgpt-mermaid-_r_i8_ .edgeLabel rect{opacity:0.5;background-color:rgb(24, 24, 24);fill:rgb(24, 24, 24);}#chatgpt-mermaid-_r_i8_ .labelBkg{background-color:rgba(24, 24, 24, 0.5);}#chatgpt-mermaid-_r_i8_ .cluster rect{fill:rgba(255, 255, 255, 0.03);stroke:rgba(255, 255, 255, 0.082);stroke-width:1px;}#chatgpt-mermaid-_r_i8_ .cluster text{fill:rgb(255, 255, 255);}#chatgpt-mermaid-_r_i8_ .cluster span{color:rgb(255, 255, 255);}#chatgpt-mermaid-_r_i8_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system,"system-ui","Segoe UI",sans-serif;font-size:12px;background:rgba(255, 255, 255, 0.03);border:1px solid rgba(255, 255, 255, 0.082);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-_r_i8_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(255, 255, 255);}#chatgpt-mermaid-_r_i8_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-_r_i8_ .icon-shape,#chatgpt-mermaid-_r_i8_ .image-shape{background-color:rgb(24, 24, 24);text-align:center;}#chatgpt-mermaid-_r_i8_ .icon-shape p,#chatgpt-mermaid-_r_i8_ .image-shape p{background-color:rgb(24, 24, 24);padding:2px;}#chatgpt-mermaid-_r_i8_ .icon-shape .label rect,#chatgpt-mermaid-_r_i8_ .image-shape .label rect{opacity:0.5;background-color:rgb(24, 24, 24);fill:rgb(24, 24, 24);}#chatgpt-mermaid-_r_i8_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-_r_i8_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-_r_i8_ .node .neo-node{stroke:rgb(31, 78, 148);}#chatgpt-mermaid-_r_i8_ [data-look="neo"].node rect,#chatgpt-mermaid-_r_i8_ [data-look="neo"].cluster rect,#chatgpt-mermaid-_r_i8_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-_r_i8_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_i8_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-_r_i8_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-_r_i8_-gradient);stroke-width:1px;}#chatgpt-mermaid-_r_i8_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_i8_ [data-look="neo"].node .neo-line path{stroke:rgb(31, 78, 148);filter:none;}#chatgpt-mermaid-_r_i8_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-_r_i8_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_i8_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-_r_i8_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-_r_i8_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_i8_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-_r_i8_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_i8_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(153, 206, 255);}#chatgpt-mermaid-_r_i8_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(153, 206, 255);}#chatgpt-mermaid-_r_i8_ .node tspan[font-weight="normal"],#chatgpt-mermaid-_r_i8_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-_r_i8_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-width:1px;}#chatgpt-mermaid-_r_i8_ .node rect,#chatgpt-mermaid-_r_i8_ .node circle,#chatgpt-mermaid-_r_i8_ .node ellipse,#chatgpt-mermaid-_r_i8_ .node polygon,#chatgpt-mermaid-_r_i8_ .node path{fill:rgb(0, 40, 77);stroke:rgba(255, 255, 255, 0.1);stroke-width:1px;}#chatgpt-mermaid-_r_i8_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-_r_i8_ .mermaid-decision .label-container{fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-dasharray:2,2;}#chatgpt-mermaid-_r_i8_ .edgePaths .flowchart-link{stroke:rgba(255, 255, 255, 0.498);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-_r_i8_ .marker{fill:rgba(255, 255, 255, 0.498);stroke:rgba(255, 255, 255, 0.498);}#chatgpt-mermaid-_r_i8_ :root{--mermaid-font-family:-apple-system,"system-ui","Segoe UI",sans-serif;}Capacitor PlatformExternal Data ServicesPure Function CoreZustand State LayerReact Presentation LayerHapticsLocal NotificationsSafe AreaOpen-Meteo AdapterAIS Stream AdapterBathymetry ServicePort Data AdapterPhysics EngineEconomy EngineRoute PlannerOffline SettlementDead ReckoningShipSliceNavigationSliceEconomySliceWorldSliceUIModalSliceMapLibre + Deck.glBridge HUDTrade / Shipyard / JournalGameAsset
+架构中的唯一真相源
+类型
+唯一真相源
+禁止行为
+数据类型
+src/types/index.ts
+在组件内重新定义全局船舶类型
+静态数值
+src/config/
+业务组件中硬编码船舶参数
+动态游戏状态
+src/store/
+使用多个 React State 保存同一船舶状态
+物理计算
+src/core/
+在 HUD 中计算油耗、吃水或航速
+外部真实数据
+src/services/
+组件直接调用外部 API
+美术资源
+src/assets/AssetRegistry.ts
+业务组件直接引用原始资产路径
+原生能力
+src/platform/
+React 组件直接调用原生插件
+
+第一部分：精确到每一个文件的完整目录树
+以下目录树是第一阶段完整的项目结构基线。src/ 与 public/ 下所有初始文件都在此列出。后续允许在对应 Agent 的所有权范围内新增文件，但不得跨 Agent 擅自修改。
+era-of-seafaring/
+├── public/
+│   ├── assets/
+│   │   ├── override/
+│   │   │   ├── vessels/
+│   │   │   │   └── tier1_sloop.png        # T1帆船正式美术覆写样例
+│   │   │   ├── hud/
+│   │   │   │   └── compass.webp            # 罗盘美术覆写样例
+│   │   │   ├── weather/
+│   │   │   │   └── storm.svg               # 风暴图标覆写样例
+│   │   │   └── ports/
+│   │   │       └── port_default.webp       # 港口标志覆写样例
+│   │   ├── procedural/
+│   │   │   └── README.md                   # 程序化资源说明
+│   │   └── assetManifest.json              # 静态资产映射配置
+│   ├── data/
+│   │   ├── ports/
+│   │   │   └── wpi_sample.json             # WPI港口样例数据
+│   │   ├── bathymetry/
+│   │   │   └── README.md                   # 水深数据部署说明
+│   │   └── ais/
+│   │       └── synthetic_routes.json        # 模拟船舶航线样例
+│   ├── fonts/
+│   │   └── README.md                        # 字体授权及加载说明
+│   └── favicon.svg                          # 游戏应用图标
+│
+├── src/
+│   ├── main.tsx                             # React应用入口
+│   ├── App.tsx                              # 根组件及全局布局
+│   ├── vite-env.d.ts                        # Vite环境变量类型声明
+│   │
+│   ├── types/
+│   │   ├── index.ts                         # 全局唯一类型契约
+│   │   ├── navigation.ts                    # 航行和航线补充类型
+│   │   ├── economy.ts                       # 贸易结算补充类型
+│   │   ├── assets.ts                        # AssetRegistry类型
+│   │   └── services.ts                      # 外部服务接口类型
+│   │
+│   ├── config/
+│   │   ├── vessels.ts                       # T1-T6船舶静态数值
+│   │   ├── ports.ts                         # WPI港口配置与游戏补充字段
+│   │   ├── commodities.ts                   # 15种商品配置
+│   │   ├── upgrades.ts                      # 船厂改装件配置
+│   │   ├── captainPerks.ts                  # 船长技能配置
+│   │   ├── economy.ts                       # 贸易价格及费用常量
+│   │   ├── physics.ts                       # 物理模型常量
+│   │   ├── gameBalance.ts                    # 全局游戏平衡参数
+│   │   └── index.ts                         # 配置统一导出
+│   │
+│   ├── assets/
+│   │   ├── AssetRegistry.ts                 # 资产查询、路径解析、覆写机制
+│   │   ├── assetManifest.ts                 # TS侧Manifest类型化入口
+│   │   ├── assetManifestLoader.ts           # Manifest加载及校验
+│   │   ├── procedural/
+│   │   │   ├── index.ts                     # 程序化生成器统一导出
+│   │   │   ├── vesselSvg.ts                 # 船型SVG生成器
+│   │   │   ├── weatherSvg.ts                # 天气SVG生成器
+│   │   │   ├── compassSvg.ts                # 罗盘SVG生成器
+│   │   │   ├── portSvg.ts                   # 港口标志生成器
+│   │   │   ├── cargoSvg.ts                  # 货物图标生成器
+│   │   │   ├── gaugeSvg.ts                  # 仪表SVG生成器
+│   │   │   └── seaWindowSvg.ts               # 海况舷窗SVG生成器
+│   │   └── utils/
+│   │       ├── svgSanitizer.ts               # SVG内容安全过滤
+│   │       └── assetUrl.ts                   # 资源URL统一解析
+│   │
+│   ├── core/
+│   │   ├── index.ts                          # Core统一导出
+│   │   ├── physics/
+│   │   │   ├── engine.ts                     # 车钟与动力航速
+│   │   │   ├── fuel.ts                       # 主机和辅机油耗
+│   │   │   ├── sail.ts                       # AWA及Polar Curve
+│   │   │   ├── windage.ts                    # 风阻和横漂
+│   │   │   ├── waves.ts                      # 波浪失速和船体损伤
+│   │   │   ├── current.ts                    # 洋流矢量合成
+│   │   │   ├── draft.ts                      # 载重与吃水
+│   │   │   ├── grounding.ts                  # 搁浅及脱浅判定
+│   │   │   └── navigation.ts                 # SOG/COG与球面位置更新
+│   │   ├── economy/
+│   │   │   ├── trade.ts                      # 贸易价格及交易利润
+│   │   │   ├── supplies.ts                   # 补给扣减及耗尽状态
+│   │   │   ├── maintenance.ts                # 船体维修与备件消耗
+│   │   │   ├── crew.ts                       # 船员工资及人力成本
+│   │   │   └── upgrades.ts                   # 改装成本与效果计算
+│   │   ├── route/
+│   │   │   ├── greatCircle.ts                # 大圆航线计算
+│   │   │   ├── routeCost.ts                  # 航线时间、燃油及风险预估
+│   │   │   └── routeValidation.ts            # 吃水和续航可达性校验
+│   │   ├── ais/
+│   │   │   ├── deadReckoning.ts              # AIS航位推算
+│   │   │   └── targetInterpolation.ts         # 船只位置插值
+│   │   └── simulation/
+│   │       ├── tick.ts                       # 单步纯函数模拟
+│   │       ├── offlineSettlement.ts           # 离线时间差结算
+│   │       └── timeScale.ts                   # 时间倍率换算
+│   │
+│   ├── services/
+│   │   ├── weather/
+│   │   │   ├── openMeteoClient.ts             # Open-Meteo请求客户端
+│   │   │   ├── weatherAdapter.ts              # API字段映射
+│   │   │   ├── weatherCache.ts                # 天气缓存策略
+│   │   │   └── weatherService.ts               # 天气查询服务入口
+│   │   ├── ais/
+│   │   │   ├── aisstreamClient.ts              # AIS WebSocket客户端
+│   │   │   ├── aisAdapter.ts                   # AIS原始数据映射
+│   │   │   ├── aisConnectionManager.ts          # 连接重试和生命周期
+│   │   │   ├── syntheticVesselGenerator.ts      # 模拟远洋船只生成
+│   │   │   └── aisService.ts                    # REAL/SYNTHETIC混合流
+│   │   ├── bathymetry/
+│   │   │   ├── bathymetryAdapter.ts             # GEBCO数据适配
+│   │   │   ├── bathymetryCache.ts               # 水深缓存
+│   │   │   └── bathymetryService.ts              # 水深查询服务
+│   │   └── ports/
+│   │       ├── portAdapter.ts                    # WPI数据映射
+│   │       └── portService.ts                    # 港口查询服务
+│   │
+│   ├── store/
+│   │   ├── index.ts                              # Store统一创建和导出
+│   │   ├── types.ts                               # Store内部状态契约
+│   │   ├── slices/
+│   │   │   ├── shipSlice.ts                       # ShipSlice
+│   │   │   ├── navigationSlice.ts                 # NavigationSlice
+│   │   │   ├── economySlice.ts                    # EconomySlice
+│   │   │   ├── worldSlice.ts                      # WorldSlice
+│   │   │   └── uiModalSlice.ts                    # UIModalSlice
+│   │   ├── selectors/
+│   │   │   ├── shipSelectors.ts                   # 船舶状态派生选择器
+│   │   │   ├── navigationSelectors.ts             # 导航状态派生选择器
+│   │   │   └── economySelectors.ts                 # 经济状态派生选择器
+│   │   ├── persistence/
+│   │   │   ├── persistConfig.ts                    # 存档白名单与版本
+│   │   │   ├── migrateSave.ts                      # 存档版本迁移
+│   │   │   └── offlineClock.ts                     # 离线时间戳计算
+│   │   └── gameLoop/
+│   │       ├── gameLoop.ts                         # RAF主循环
+│   │       ├── simulationScheduler.ts              # 固定步长模拟调度
+│   │       └── gameTimeController.ts               # 1x-60x倍率控制
+│   │
+│   ├── components/
+│   │   ├── common/
+│   │   │   ├── GameAsset.tsx                       # 统一美术资源组件
+│   │   │   ├── LoadingScreen.tsx                    # 加载界面
+│   │   │   ├── ErrorBoundary.tsx                    # React错误边界
+│   │   │   └── ConfirmDialog.tsx                    # 通用确认对话框
+│   │   ├── map/
+│   │   │   ├── MapContainer.tsx                     # MapLibre容器
+│   │   │   ├── mapStyle.ts                          # 海图底图样式
+│   │   │   ├── MapInteractionController.ts           # 点击、拖拽、缩放交互
+│   │   │   ├── DeckOverlay.tsx                       # Deck.gl Overlay绑定
+│   │   │   ├── PlayerVesselLayer.ts                  # 玩家船只Layer
+│   │   │   ├── AISFleetLayer.ts                      # AIS船队Layer
+│   │   │   ├── RouteLayer.ts                         # 航线Layer
+│   │   │   ├── WindParticleLayer.ts                   # 风场粒子Layer
+│   │   │   ├── RangeRingLayer.ts                      # 燃油可达圈Layer
+│   │   │   └── PortLayer.ts                           # 港口点位Layer
+│   │   ├── hud/
+│   │   │   ├── BridgeHUD.tsx                         # 驾驶台HUD布局
+│   │   │   ├── EngineTelegraph.tsx                   # 拟物车钟推杆
+│   │   │   ├── CompassHUD.tsx                        # 罗盘与航向仪
+│   │   │   ├── WindInstrument.tsx                     # 风速风向仪
+│   │   │   ├── SupplyGauge.tsx                        # 四大补给仪表条
+│   │   │   ├── SeaWindow.tsx                          # 舷窗海况视窗
+│   │   │   ├── VHFPanel.tsx                           # 游戏内VHF面板
+│   │   │   ├── SpeedLog.tsx                            # SOG/COG航速日志
+│   │   │   └── ShipStatusPanel.tsx                     # 船体与引擎状态
+│   │   └── modals/
+│   │       ├── PortTradeModal.tsx                     # 港口贸易大厅
+│   │       ├── ShipyardModal.tsx                      # 买船及船厂改装
+│   │       ├── AISDetailModal.tsx                     # AIS目标详情
+│   │       ├── ShipSpottingModal.tsx                  # 船只图鉴
+│   │       ├── ExplorationJournalModal.tsx             # 世界探索日志
+│   │       └── MaydayModal.tsx                        # 游戏内求援界面
+│   │
+│   ├── platform/
+│   │   ├── haptics.ts                                 # Capacitor震动封装
+│   │   ├── notifications.ts                            # 本地通知封装
+│   │   ├── appLifecycle.ts                             # 前后台生命周期
+│   │   ├── safeArea.ts                                 # 原生安全区适配
+│   │   └── platformAdapter.ts                           # Web/Native能力统一接口
+│   │
+│   ├── styles/
+│   │   ├── index.css                                   # 全局样式入口
+│   │   ├── bridge.css                                  # 舰桥仪表主题
+│   │   └── map.css                                     # 海图样式
+│   │
+│   └── test/
+│       ├── setup.ts                                    # Vitest测试环境
+│       ├── fixtures/
+│       │   ├── vesselFixtures.ts                        # 船舶测试样例
+│       │   ├── weatherFixtures.ts                       # 天气测试样例
+│       │   └── aisFixtures.ts                           # AIS测试样例
+│       └── integration/
+│           └── storeIntegration.test.ts                 # Store跨切片集成测试
+│
+├── index.html                                           # Vite HTML入口
+├── package.json                                         # 依赖与脚本
+├── package-lock.json                                    # 依赖版本锁定
+├── tsconfig.json                                        # TS严格编译配置
+├── tsconfig.node.json                                   # Vite配置TS环境
+├── vite.config.ts                                        # Vite构建配置
+├── tailwind.config.js                                   # Tailwind配置
+├── postcss.config.js                                    # PostCSS配置
+├── capacitor.config.ts                                  # Capacitor配置
+├── eslint.config.js                                     # ESLint规则
+├── .prettierrc                                          # 格式化配置
+├── .gitignore                                           # Git忽略规则
+└── README.md                                             # 项目开发说明
+以上共包含超过 100 个核心源码与配置文件。
+文件所有权执行规则
+每个文件必须在 AGENTS.md 或任务分配表中标记：
+OWNER: Agent-3
+READERS: Agent-1, Agent-4
+STATUS: IN_PROGRESS
+规则：
+每个文件只有一个 OWNER。  
+READERS 可以读取，但不能修改。  
+公共契约修改必须经过架构负责人审批。  
+所有 Agent 必须在独立 Git Worktree 或独立分支开发。  
+禁止通过同一个文件中的不同代码区块来规避文件所有权冲突。  
+
+第二部分：全局核心 TypeScript 接口契约
+文件：src/types/index.ts
+这是所有 Agent 的第一依赖文件。应由架构负责人创建并冻结。
+以下代码为完整核心契约。
+2.1 src/types/index.ts
+/* =========================================================
+ * Era of Seafaring: Live Ocean
+ * Global Data Contracts
+ * TypeScript Strict Mode
+ * ========================================================= */
+
+export type Brand<T, B extends string> = T & {
+  readonly __brand: B;
+};
+
+export type Latitude = Brand<number, "Latitude">;
+export type Longitude = Brand<number, "Longitude">;
+export type NauticalMiles = Brand<number, "NauticalMiles">;
+export type Knots = Brand<number, "Knots">;
+export type Credits = Brand<number, "Credits">;
+export type GameHours = Brand<number, "GameHours">;
+export type UnixMs = Brand<number, "UnixMs">;
+
+export type Tier = 1 | 2 | 3 | 4 | 5 | 6;
+
+export type PropulsionType =
+  | "Sail"
+  | "Diesel"
+  | "Hybrid"
+  | "Nuclear";
+
+export type EngineTelegraph =
+  | "STOP"
+  | "SLOW"
+  | "HALF"
+  | "ECO"
+  | "FULL"
+  | "FLANK";
+
+export type VesselCategory =
+  | "Cargo"
+  | "Tanker"
+  | "Sailboat"
+  | "Icebreaker"
+  | "Research"
+  | "BulkCarrier"
+  | "Container"
+  | "Fishing"
+  | "Passenger"
+  | "Other";
+
+export type AISDataSource =
+  | "REAL_LIVE"
+  | "SYNTHETIC_OCEAN"
+  | "HISTORICAL";
+
+export type AISNavigationStatus =
+  | "UNDERWAY_ENGINE"
+  | "UNDERWAY_SAIL"
+  | "AT_ANCHOR"
+  | "MOORED"
+  | "NOT_UNDER_COMMAND"
+  | "RESTRICTED_MANEUVERABILITY"
+  | "AGROUND"
+  | "UNKNOWN";
+
+export type SupplyType =
+  | "FUEL"
+  | "FRESH_WATER"
+  | "RATION"
+  | "SPARE_PARTS";
+
+export type CargoQuality =
+  | "STANDARD"
+  | "REFRIGERATED"
+  | "HAZARDOUS"
+  | "FRAGILE"
+  | "BULK";
+
+export type GameStatus =
+  | "IDLE"
+  | "SAILING"
+  | "DOCKED"
+  | "GROUNDED"
+  | "EMERGENCY"
+  | "PAUSED";
+
+export interface GeoPosition {
+  latitude: Latitude;
+  longitude: Longitude;
+}
+
+export interface Vector2 {
+  east: number;
+  north: number;
+}
+
+export interface VesselEquipmentSlot {
+  slotId: string;
+  allowedCategories: string[];
+}
+
+export interface VesselSpec {
+  vesselId: string;
+  name: string;
+  tier: Tier;
+  category: VesselCategory;
+  propulsion: PropulsionType;
+
+  unlockLevel: number;
+  purchasePrice: Credits;
+
+  lightDisplacementT: number;
+  dwtT: number;
+  cargoVolumeM3: number;
+  containerCapacityTEU: number;
+
+  lightDraftM: number;
+  loadedDraftM: number;
+
+  ecoSpeedKn: Knots;
+  maxSpeedKn: Knots;
+
+  mainFuelRateEcoKgH: number;
+  auxiliaryFuelRateKgH: number;
+
+  fuelCapacityT: number;
+  waterCapacityT: number;
+  rationCapacityT: number;
+  sparePartsCapacityT: number;
+
+  theoreticalRangeNM: NauticalMiles;
+
+  safeBeaufort: number;
+  safeWaveHeightM: number;
+
+  crewCount: number;
+
+  equipmentSlots: VesselEquipmentSlot[];
+}
+
+export interface CargoItem {
+  cargoId: string;
+  commodityId: string;
+
+  quantityT: number;
+  volumeM3: number;
+
+  unitBuyPrice: Credits;
+  quality: CargoQuality;
+
+  integrity: number;
+  refrigerated: boolean;
+}
+
+export interface SupplyState {
+  fuelT: number;
+  freshWaterT: number;
+  rationT: number;
+  sparePartsT: number;
+}
+
+export interface VesselInstalledUpgrade {
+  upgradeId: string;
+  installedAtGameTime: number;
+  durability: number;
+}
+
+export interface PlayerVesselState {
+  vesselId: string;
+
+  position: GeoPosition;
+
+  headingDeg: number;
+  cogDeg: number;
+  sogKn: Knots;
+
+  engineTelegraph: EngineTelegraph;
+  propulsionMode: PropulsionType;
+
+  supplies: SupplyState;
+
+  cargoItems: CargoItem[];
+  cargoWeightT: number;
+  cargoVolumeM3: number;
+
+  installedUpgrades: VesselInstalledUpgrade[];
+
+  hullHp: number;
+  hullHpMax: number;
+
+  cargoIntegrity: number;
+
+  currentDraftM: number;
+  currentDisplacementT: number;
+
+  gameStatus: GameStatus;
+
+  engineTemperature: number;
+  engineOverheated: boolean;
+
+  grounded: boolean;
+
+  crewHealth: number;
+
+  lastSimulationTimestamp: UnixMs;
+}
+
+export interface MarineWeatherCell {
+  cellId: string;
+
+  position: GeoPosition;
+
+  sampledAt: UnixMs;
+
+  windSpeedKn: number;
+  windDirectionDeg: number;
+  windGustKn: number;
+
+  significantWaveHeightM: number;
+  swellPeriodS: number;
+  swellDirectionDeg: number;
+
+  currentSpeedKn: number;
+  currentDirectionDeg: number;
+
+  currentVector: Vector2;
+
+  pressureHpa: number;
+
+  beaufortScale: number;
+
+  source:
+    | "OPEN_METEO"
+    | "NOAA_GFS"
+    | "SYNTHETIC";
+
+  quality:
+    | "OBSERVED"
+    | "FORECAST"
+    | "INTERPOLATED"
+    | "FALLBACK";
+}
+
+export interface AISVesselTarget {
+  targetId: string;
+
+  mmsi: string;
+  imo: string | null;
+
+  vesselName: string;
+
+  vesselType: VesselCategory;
+
+  position: GeoPosition;
+
+  sogKn: Knots;
+  cogDeg: number;
+  headingDeg: number | null;
+
+  draftM: number | null;
+
+  destinationPort: string | null;
+  eta: UnixMs | null;
+
+  navigationStatus: AISNavigationStatus;
+
+  source: AISDataSource;
+
+  observedAt: UnixMs;
+  receivedAt: UnixMs;
+
+  isCollectedInShipBook: boolean;
+
+  positionUncertaintyM: number;
+}
+
+export interface PortCommodity {
+  commodityId: string;
+
+  buyPricePerT: Credits;
+  sellPricePerT: Credits;
+
+  stockT: number;
+  maxStockT: number;
+
+  productionPerGameHourT: number;
+  consumptionPerGameHourT: number;
+}
+
+export interface PortInfo {
+  portId: string;
+
+  unlocode: string;
+  name: string;
+
+  position: GeoPosition;
+
+  maxAllowedDraftM: number;
+
+  fuelPricePerL: Credits;
+  freshWaterPricePerT: Credits;
+
+  rationPricePerT: Credits;
+  sparePartsPricePerT: Credits;
+
+  portFeeCredits: Credits;
+
+  commodities: PortCommodity[];
+
+  canRefuel: boolean;
+  canSupplyFreshWater: boolean;
+  canRepair: boolean;
+
+  hasShipyard: boolean;
+  hasSalvageService: boolean;
+}
+
+export type AssetKey =
+  | "vessel.tier1.sloop"
+  | "vessel.tier1.harborTrader"
+  | "vessel.tier2.oceanSloop"
+  | "vessel.tier2.feeder120"
+  | "vessel.tier3.windClipper"
+  | "vessel.tier3.researchVessel"
+  | "vessel.tier4.panamax"
+  | "vessel.tier4.oceanExplorer"
+  | "vessel.tier5.capeBulk"
+  | "vessel.tier5.arcticResearch"
+  | "vessel.tier6.nuclearIcebreaker"
+  | "vessel.tier6.globalExpedition"
+  | "weather.clear"
+  | "weather.cloudy"
+  | "weather.storm"
+  | "weather.snow"
+  | "hud.compass"
+  | "hud.engineTelegraph"
+  | "hud.seaWindow"
+  | "port.default"
+  | "cargo.container"
+  | "cargo.oil"
+  | "cargo.ore";
+
+export type AssetRenderMode =
+  | "procedural"
+  | "image";
+
+export type AssetFormat =
+  | "svg"
+  | "png"
+  | "webp";
+
+export interface AssetConfig {
+  assetId: AssetKey;
+
+  mode: AssetRenderMode;
+
+  overridePath?: string;
+
+  format?: AssetFormat;
+
+  width: number;
+  height: number;
+
+  proceduralGenerator?: string;
+
+  fallbackAssetId?: AssetKey;
+
+  cache: boolean;
+}
+
+export interface AssetManifest {
+  version: number;
+
+  assets: Record<AssetKey, AssetConfig>;
+}
+
+export interface RouteWaypoint {
+  waypointId: string;
+  position: GeoPosition;
+
+  expectedArrivalGameTime: number;
+
+  waypointType:
+    | "PORT"
+    | "NAVIGATION"
+    | "ANCHORAGE"
+    | "POLAR_GATE";
+}
+
+export interface PlannedRoute {
+  routeId: string;
+
+  waypoints: RouteWaypoint[];
+
+  totalDistanceNM: NauticalMiles;
+
+  estimatedDurationGameHours: GameHours;
+
+  estimatedFuelT: number;
+
+  estimatedRisk: number;
+
+  createdAt: UnixMs;
+}
+
+export interface GameClockState {
+  gameTimeMs: number;
+
+  realTimeMs: number;
+
+  timeScale: 1 | 2 | 5 | 10 | 30 | 60;
+
+  paused: boolean;
+}
+
+export interface GameSaveData {
+  saveVersion: number;
+
+  playerCredits: Credits;
+
+  playerLevel: number;
+  playerXP: number;
+
+  ownedVesselIds: string[];
+
+  activeVessel: PlayerVesselState;
+
+  discoveredPortIds: string[];
+
+  collectedAISIds: string[];
+
+  completedContracts: string[];
+
+  gameClock: GameClockState;
+
+  lastOnlineTimestamp: UnixMs;
+}
+
+export interface SimulationResult {
+  nextVesselState: PlayerVesselState;
+
+  distanceAdvancedNM: number;
+
+  fuelConsumedT: number;
+
+  waterConsumedT: number;
+
+  rationConsumedT: number;
+
+  sparePartsConsumedT: number;
+
+  hullDamage: number;
+
+  cargoDamage: number;
+
+  grounded: boolean;
+
+  warnings: string[];
+}
+
+export interface WeatherQuery {
+  position: GeoPosition;
+
+  requestedAt: UnixMs;
+}
+
+export interface AISQuery {
+  minLatitude: number;
+  maxLatitude: number;
+
+  minLongitude: number;
+  maxLongitude: number;
+
+  vesselTypes?: VesselCategory[];
+}
+
+export interface BathymetrySample {
+  position: GeoPosition;
+
+  depthM: number;
+
+  sampledAt: UnixMs;
+
+  source: "GEBCO" | "CACHE" | "FALLBACK";
+}
+
+export interface ServiceResult<T> {
+  data: T;
+
+  receivedAt: UnixMs;
+
+  stale: boolean;
+
+  source: string;
+}
+
+export interface GameError {
+  code: string;
+
+  message: string;
+
+  recoverable: boolean;
+}
+契约规范
+所有距离、航速、时间、货币字段必须带明确单位后缀。  
+所有经纬度必须采用 WGS84。  
+船舶静态参数放入 VesselSpec。  
+船舶动态参数放入 PlayerVesselState。  
+不允许将 API 原始 JSON 直接写入 Zustand。  
+外部 API 进入 Store 前必须完成 Adapter 转换和数据验证。  
+AssetKey 作为资产访问唯一标识，不允许组件拼接随机路径。  
+注意：Brand<T, B> 用于静态防止单位混用；外部 API 的数字进入业务层前，必须由 Adapter 显式转换为对应 Brand 类型，不能使用 as any 绕过类型检查。
+
+第三部分：程序化图形与美术资源一键替换系统设计
+3.1 资产管线设计
+#chatgpt-mermaid-_r_iv_{font-family:-apple-system,"system-ui","Segoe UI",sans-serif;font-size:14px;fill:rgb(255, 255, 255);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-_r_iv_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-_r_iv_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-_r_iv_ .error-icon{fill:rgba(255, 255, 255, 0.03);}#chatgpt-mermaid-_r_iv_ .error-text{fill:rgb(255, 255, 255);stroke:rgb(255, 255, 255);}#chatgpt-mermaid-_r_iv_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-_r_iv_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-_r_iv_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-_r_iv_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-_r_iv_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-_r_iv_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-_r_iv_ .marker{fill:rgba(255, 255, 255, 0.498);stroke:rgba(255, 255, 255, 0.498);}#chatgpt-mermaid-_r_iv_ .marker.cross{stroke:rgba(255, 255, 255, 0.498);}#chatgpt-mermaid-_r_iv_ svg{font-family:-apple-system,"system-ui","Segoe UI",sans-serif;font-size:14px;}#chatgpt-mermaid-_r_iv_ p{margin:0;}#chatgpt-mermaid-_r_iv_ .label{font-family:-apple-system,"system-ui","Segoe UI",sans-serif;color:rgb(255, 255, 255);}#chatgpt-mermaid-_r_iv_ .cluster-label text{fill:rgb(255, 255, 255);}#chatgpt-mermaid-_r_iv_ .cluster-label span{color:rgb(255, 255, 255);}#chatgpt-mermaid-_r_iv_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-_r_iv_ .label text,#chatgpt-mermaid-_r_iv_ span{fill:rgb(255, 255, 255);color:rgb(255, 255, 255);}#chatgpt-mermaid-_r_iv_ .node rect,#chatgpt-mermaid-_r_iv_ .node circle,#chatgpt-mermaid-_r_iv_ .node ellipse,#chatgpt-mermaid-_r_iv_ .node polygon,#chatgpt-mermaid-_r_iv_ .node path{fill:rgb(26, 40, 61);stroke:rgb(31, 78, 148);stroke-width:1px;}#chatgpt-mermaid-_r_iv_ .rough-node .label text,#chatgpt-mermaid-_r_iv_ .node .label text,#chatgpt-mermaid-_r_iv_ .image-shape .label,#chatgpt-mermaid-_r_iv_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-_r_iv_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-_r_iv_ .rough-node .label,#chatgpt-mermaid-_r_iv_ .node .label,#chatgpt-mermaid-_r_iv_ .image-shape .label,#chatgpt-mermaid-_r_iv_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-_r_iv_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-_r_iv_ .root .anchor path{fill:rgba(255, 255, 255, 0.498)!important;stroke-width:0;stroke:rgba(255, 255, 255, 0.498);}#chatgpt-mermaid-_r_iv_ .arrowheadPath{fill:rgba(255, 255, 255, 0.498);}#chatgpt-mermaid-_r_iv_ .edgePath .path{stroke:rgba(255, 255, 255, 0.498);stroke-width:1px;}#chatgpt-mermaid-_r_iv_ .flowchart-link{stroke:rgba(255, 255, 255, 0.498);fill:none;}#chatgpt-mermaid-_r_iv_ .edgeLabel{background-color:rgb(24, 24, 24);text-align:center;}#chatgpt-mermaid-_r_iv_ .edgeLabel p{background-color:rgb(24, 24, 24);}#chatgpt-mermaid-_r_iv_ .edgeLabel rect{opacity:0.5;background-color:rgb(24, 24, 24);fill:rgb(24, 24, 24);}#chatgpt-mermaid-_r_iv_ .labelBkg{background-color:rgba(24, 24, 24, 0.5);}#chatgpt-mermaid-_r_iv_ .cluster rect{fill:rgba(255, 255, 255, 0.03);stroke:rgba(255, 255, 255, 0.082);stroke-width:1px;}#chatgpt-mermaid-_r_iv_ .cluster text{fill:rgb(255, 255, 255);}#chatgpt-mermaid-_r_iv_ .cluster span{color:rgb(255, 255, 255);}#chatgpt-mermaid-_r_iv_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system,"system-ui","Segoe UI",sans-serif;font-size:12px;background:rgba(255, 255, 255, 0.03);border:1px solid rgba(255, 255, 255, 0.082);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-_r_iv_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(255, 255, 255);}#chatgpt-mermaid-_r_iv_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-_r_iv_ .icon-shape,#chatgpt-mermaid-_r_iv_ .image-shape{background-color:rgb(24, 24, 24);text-align:center;}#chatgpt-mermaid-_r_iv_ .icon-shape p,#chatgpt-mermaid-_r_iv_ .image-shape p{background-color:rgb(24, 24, 24);padding:2px;}#chatgpt-mermaid-_r_iv_ .icon-shape .label rect,#chatgpt-mermaid-_r_iv_ .image-shape .label rect{opacity:0.5;background-color:rgb(24, 24, 24);fill:rgb(24, 24, 24);}#chatgpt-mermaid-_r_iv_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-_r_iv_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-_r_iv_ .node .neo-node{stroke:rgb(31, 78, 148);}#chatgpt-mermaid-_r_iv_ [data-look="neo"].node rect,#chatgpt-mermaid-_r_iv_ [data-look="neo"].cluster rect,#chatgpt-mermaid-_r_iv_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-_r_iv_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_iv_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-_r_iv_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-_r_iv_-gradient);stroke-width:1px;}#chatgpt-mermaid-_r_iv_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_iv_ [data-look="neo"].node .neo-line path{stroke:rgb(31, 78, 148);filter:none;}#chatgpt-mermaid-_r_iv_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-_r_iv_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_iv_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-_r_iv_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-_r_iv_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_iv_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-_r_iv_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_iv_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(153, 206, 255);}#chatgpt-mermaid-_r_iv_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(153, 206, 255);}#chatgpt-mermaid-_r_iv_ .node tspan[font-weight="normal"],#chatgpt-mermaid-_r_iv_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-_r_iv_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-width:1px;}#chatgpt-mermaid-_r_iv_ .node rect,#chatgpt-mermaid-_r_iv_ .node circle,#chatgpt-mermaid-_r_iv_ .node ellipse,#chatgpt-mermaid-_r_iv_ .node polygon,#chatgpt-mermaid-_r_iv_ .node path{fill:rgb(0, 40, 77);stroke:rgba(255, 255, 255, 0.1);stroke-width:1px;}#chatgpt-mermaid-_r_iv_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-_r_iv_ .mermaid-decision .label-container{fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-dasharray:2,2;}#chatgpt-mermaid-_r_iv_ .edgePaths .flowchart-link{stroke:rgba(255, 255, 255, 0.498);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-_r_iv_ .marker{fill:rgba(255, 255, 255, 0.498);stroke:rgba(255, 255, 255, 0.498);}#chatgpt-mermaid-_r_iv_ :root{--mermaid-font-family:-apple-system,"system-ui","Segoe UI",sans-serif;}GameAsset(assetId)AssetRegistry.get(assetId)Manifest modeProcedural GeneratorOverride ImageSVG / Canvas RenderPNG / WebP / SVG LoadFallback ValidationUI / HUD / Mapproceduralimage
+核心机制：
+assetId 是资源唯一标识。  
+assetManifest.json 决定资源的默认模式。  
+mode: "procedural" 调用程序化生成器。  
+mode: "image" 加载对应图片。  
+图片加载失败自动回退到程序化资源。  
+业务组件不感知资产来自 SVG、Canvas、PNG 或 WebP。  
+同一 assetId 在 HUD、海图和船厂界面可以复用。  
+3.2 public/assets/assetManifest.json
+{
+  "version": 1,
+  "assets": {
+    "vessel.tier1.sloop": {
+      "assetId": "vessel.tier1.sloop",
+      "mode": "procedural",
+      "width": 64,
+      "height": 64,
+      "proceduralGenerator": "vesselSvg",
+      "overridePath": "/assets/override/vessels/tier1_sloop.png",
+      "cache": true
+    },
+    "vessel.tier1.harborTrader": {
+      "assetId": "vessel.tier1.harborTrader",
+      "mode": "procedural",
+      "width": 64,
+      "height": 64,
+      "proceduralGenerator": "vesselSvg",
+      "overridePath": "/assets/override/vessels/tier1_harbor_trader.webp",
+      "cache": true
+    },
+    "weather.storm": {
+      "assetId": "weather.storm",
+      "mode": "procedural",
+      "width": 48,
+      "height": 48,
+      "proceduralGenerator": "weatherSvg",
+      "overridePath": "/assets/override/weather/storm.svg",
+      "cache": true
+    },
+    "hud.seaWindow": {
+      "assetId": "hud.seaWindow",
+      "mode": "procedural",
+      "width": 320,
+      "height": 160,
+      "proceduralGenerator": "seaWindowSvg",
+      "overridePath": "/assets/override/hud/sea_window.webp",
+      "cache": false
+    }
+  }
+}
+此 JSON 只是说明结构。实际文件必须覆盖 AssetKey 的所有合法枚举值，且通过 Manifest Validator 检查，不能在生产环境保留不完整配置。
+3.3 src/assets/AssetRegistry.ts
+该文件是所有资产加载逻辑的唯一入口。
+为满足严格 TypeScript，Manifest 的 JSON 导入采用 Vite 支持的 JSON 模块导入方式。下面给出核心完整实现。
+// src/assets/AssetRegistry.ts
+
+import type {
+  AssetConfig,
+  AssetKey,
+  AssetManifest,
+} from "../types";
+
+import {
+  generateVesselSvg,
+  type VesselSvgOptions,
+} from "./procedural/vesselSvg";
+
+import {
+  generateWeatherSvg,
+} from "./procedural/weatherSvg";
+
+import {
+  generateCompassSvg,
+} from "./procedural/compassSvg";
+
+import {
+  generateSeaWindowSvg,
+} from "./procedural/seaWindowSvg";
+
+type GeneratorName =
+  | "vesselSvg"
+  | "weatherSvg"
+  | "compassSvg"
+  | "seaWindowSvg";
+
+export interface AssetRenderRequest {
+  assetId: AssetKey;
+
+  width?: number;
+  height?: number;
+
+  headingDeg?: number;
+
+  vesselCategory?: VesselSvgOptions["category"];
+
+  weatherLevel?: number;
+
+  waveHeightM?: number;
+}
+
+export interface ResolvedAsset {
+  assetId: AssetKey;
+
+  mode: "procedural" | "image";
+
+  url?: string;
+
+  svg?: string;
+
+  width: number;
+  height: number;
+
+  fallback: boolean;
+}
+
+const GENERATOR_MAP: Record<
+  GeneratorName,
+  (request: AssetRenderRequest) => string
+> = {
+  vesselSvg: (request) =>
+    generateVesselSvg({
+      category: request.vesselCategory ?? "Cargo",
+      headingDeg: request.headingDeg ?? 0,
+      width: request.width ?? 64,
+      height: request.height ?? 64,
+    }),
+
+  weatherSvg: (request) =>
+    generateWeatherSvg({
+      level: request.weatherLevel ?? 1,
+      width: request.width ?? 48,
+      height: request.height ?? 48,
+    }),
+
+  compassSvg: (request) =>
+    generateCompassSvg({
+      headingDeg: request.headingDeg ?? 0,
+      width: request.width ?? 64,
+      height: request.height ?? 64,
+    }),
+
+  seaWindowSvg: (request) =>
+    generateSeaWindowSvg({
+      waveHeightM: request.waveHeightM ?? 1,
+      width: request.width ?? 320,
+      height: request.height ?? 160,
+    }),
+};
+
+export class AssetRegistry {
+  private manifest: AssetManifest | null = null;
+
+  private readonly svgCache = new Map<string, string>();
+
+  private readonly imageCache = new Map<string, string>();
+
+  private readonly basePath = "/assets";
+
+  public async initialize(): Promise<void> {
+    const response = await fetch(
+      `${this.basePath}/assetManifest.json`,
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Asset manifest loading failed: ${response.status}`,
+      );
+    }
+
+    const manifest = (await response.json()) as AssetManifest;
+
+    this.validateManifest(manifest);
+
+    this.manifest = manifest;
+  }
+
+  public getManifest(): AssetManifest {
+    if (this.manifest === null) {
+      throw new Error("AssetRegistry is not initialized");
+    }
+
+    return this.manifest;
+  }
+
+  public getConfig(assetId: AssetKey): AssetConfig {
+    const manifest = this.getManifest();
+
+    const config = manifest.assets[assetId];
+
+    if (config === undefined) {
+      throw new Error(`Unknown assetId: ${assetId}`);
+    }
+
+    return config;
+  }
+
+  public resolve(
+    request: AssetRenderRequest,
+  ): ResolvedAsset {
+    const config = this.getConfig(request.assetId);
+
+    const width = request.width ?? config.width;
+
+    const height = request.height ?? config.height;
+
+    if (config.mode === "image") {
+      const imageUrl = this.resolveImageUrl(config);
+
+      return {
+        assetId: request.assetId,
+        mode: "image",
+        url: imageUrl,
+        width,
+        height,
+        fallback: false,
+      };
+    }
+
+    const generatorName =
+      config.proceduralGenerator as GeneratorName | undefined;
+
+    if (
+      generatorName === undefined ||
+      GENERATOR_MAP[generatorName] === undefined
+    ) {
+      throw new Error(
+        `Missing generator for asset: ${request.assetId}`,
+      );
+    }
+
+    const cacheKey = this.createCacheKey(request);
+
+    let svg = this.svgCache.get(cacheKey);
+
+    if (svg === undefined) {
+      svg = GENERATOR_MAP[generatorName]({
+        ...request,
+        width,
+        height,
+      });
+
+      if (config.cache) {
+        this.svgCache.set(cacheKey, svg);
+      }
+    }
+
+    return {
+      assetId: request.assetId,
+      mode: "procedural",
+      svg,
+      width,
+      height,
+      fallback: false,
+    };
+  }
+
+  public resolveImageUrl(config: AssetConfig): string {
+    if (config.overridePath !== undefined) {
+      return config.overridePath;
+    }
+
+    return `${this.basePath}/override/${config.assetId}.${config.format ?? "webp"}`;
+  }
+
+  public setImageOverride(
+    assetId: AssetKey,
+    overridePath: string,
+  ): void {
+    if (this.manifest === null) {
+      throw new Error("AssetRegistry is not initialized");
+    }
+
+    const config = this.manifest.assets[assetId];
+
+    if (config === undefined) {
+      throw new Error(`Unknown assetId: ${assetId}`);
+    }
+
+    config.overridePath = overridePath;
+    config.mode = "image";
+
+    this.svgCache.clear();
+    this.imageCache.clear();
+  }
+
+  public setProceduralMode(assetId: AssetKey): void {
+    if (this.manifest === null) {
+      throw new Error("AssetRegistry is not initialized");
+    }
+
+    const config = this.manifest.assets[assetId];
+
+    if (config === undefined) {
+      throw new Error(`Unknown assetId: ${assetId}`);
+    }
+
+    config.mode = "procedural";
+
+    this.svgCache.clear();
+  }
+
+  public clearCache(): void {
+    this.svgCache.clear();
+    this.imageCache.clear();
+  }
+
+  private createCacheKey(
+    request: AssetRenderRequest,
+  ): string {
+    return [
+      request.assetId,
+      request.width ?? 0,
+      request.height ?? 0,
+      request.headingDeg ?? 0,
+      request.vesselCategory ?? "",
+      request.weatherLevel ?? 0,
+      request.waveHeightM ?? 0,
+    ].join(":");
+  }
+
+  private validateManifest(
+    manifest: AssetManifest,
+  ): void {
+    if (manifest.version !== 1) {
+      throw new Error(
+        `Unsupported asset manifest version: ${manifest.version}`,
+      );
+    }
+
+    const entries = Object.values(manifest.assets);
+
+    for (const config of entries) {
+      if (config.width <= 0 || config.height <= 0) {
+        throw new Error(
+          `Invalid dimensions: ${config.assetId}`,
+        );
+      }
+
+      if (
+        config.mode === "procedural" &&
+        config.proceduralGenerator === undefined
+      ) {
+        throw new Error(
+          `Procedural generator missing: ${config.assetId}`,
+        );
+      }
+    }
+  }
+}
+
+export const assetRegistry = new AssetRegistry();
+AssetRegistry 实现注意事项
+生产版本应增加：
+图片 404 检查与 fallback。  
+SVG Sanitizer。  
+Manifest 的运行时 Schema 校验。  
+缓存版本控制。  
+AssetKey 与 Manifest Key 的完整覆盖校验。  
+对外暴露只读 Manifest，避免 UI 直接修改配置。  
+上面代码中的 setImageOverride 是运行时调试接口。正式美术替换仍以 Manifest 和静态文件部署为准。
+
+3.4 程序化 SVG 生成器
+3.4.1 船只图标：src/assets/procedural/vesselSvg.ts
+支持 Cargo、Tanker、Sailboat、Icebreaker 四种船型。
+export interface VesselSvgOptions {
+  category:
+    | "Cargo"
+    | "Tanker"
+    | "Sailboat"
+    | "Icebreaker";
+
+  headingDeg: number;
+
+  width: number;
+  height: number;
+}
+
+export function generateVesselSvg(
+  options: VesselSvgOptions,
+): string {
+  const {
+    category,
+    headingDeg,
+    width,
+    height,
+  } = options;
+
+  const bodyColor = "#CBD5E1";
+  const outlineColor = "#0F172A";
+
+  let body = "";
+
+  switch (category) {
+    case "Cargo":
+      body = `
+        <path
+          d="M32 5 L42 18 L45 45 L36 58
+             L28 58 L19 45 L22 18 Z"
+          fill="${bodyColor}"
+          stroke="${outlineColor}"
+          stroke-width="2"
+        />
+        <rect x="25" y="22" width="14" height="16"
+          fill="#64748B"/>
+      `;
+      break;
+
+    case "Tanker":
+      body = `
+        <path
+          d="M32 5 L45 18 L48 45 L37 58
+             L27 58 L16 45 L19 18 Z"
+          fill="#64748B"
+          stroke="${outlineColor}"
+          stroke-width="2"
+        />
+        <rect x="24" y="18" width="16" height="28"
+          rx="4" fill="#B45309"/>
+      `;
+      break;
+
+    case "Sailboat":
+      body = `
+        <path
+          d="M32 5 L42 18 L45 45 L36 58
+             L28 58 L19 45 L22 18 Z"
+          fill="#F8FAFC"
+          stroke="${outlineColor}"
+          stroke-width="2"
+        />
+        <path d="M31 12 L31 40 L18 40 Z"
+          fill="#E2E8F0"/>
+        <path d="M33 15 L44 40 L33 40 Z"
+          fill="#94A3B8"/>
+      `;
+      break;
+
+    case "Icebreaker":
+      body = `
+        <path
+          d="M32 3 L47 20 L43 45 L36 58
+             L28 58 L21 45 L17 20 Z"
+          fill="#38BDF8"
+          stroke="${outlineColor}"
+          stroke-width="2"
+        />
+        <path d="M24 30 L40 30 L36 42 L28 42 Z"
+          fill="#E0F2FE"/>
+      `;
+      break;
+  }
+
+  return `
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="${width}"
+      height="${height}"
+      viewBox="0 0 64 64"
+    >
+      <g transform="rotate(${headingDeg}, 32, 32)">
+        ${body}
+        <path
+          d="M32 1 L27 11 L37 11 Z"
+          fill="#F43F5E"
+        />
+      </g>
+    </svg>
+  `;
+}
+3.4.2 天气图标：src/assets/procedural/weatherSvg.ts
+export interface WeatherSvgOptions {
+  level: number;
+  width: number;
+  height: number;
+}
+
+export function generateWeatherSvg(
+  options: WeatherSvgOptions,
+): string {
+  const { level, width, height } = options;
+
+  const stormOpacity = Math.min(
+    1,
+    Math.max(0.1, level / 10),
+  );
+
+  return `
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="${width}"
+      height="${height}"
+      viewBox="0 0 48 48"
+    >
+      <g fill="#64748B">
+        <circle cx="18" cy="18" r="10"/>
+        <circle cx="28" cy="14" r="12"/>
+        <circle cx="34" cy="22" r="9"/>
+      </g>
+
+      <path
+        d="M20 28 L15 38 L23 38 L19 46
+           L31 33 L24 33 L28 28 Z"
+        fill="#FACC15"
+        opacity="${stormOpacity}"
+      />
+
+      <path
+        d="M8 33 Q18 30 28 33 T44 33"
+        stroke="#38BDF8"
+        stroke-width="2"
+        fill="none"
+      />
+    </svg>
+  `;
+}
+3.4.3 罗盘图标：src/assets/procedural/compassSvg.ts
+export interface CompassSvgOptions {
+  headingDeg: number;
+  width: number;
+  height: number;
+}
+
+export function generateCompassSvg(
+  options: CompassSvgOptions,
+): string {
+  const { headingDeg, width, height } = options;
+
+  return `
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="${width}"
+      height="${height}"
+      viewBox="0 0 64 64"
+    >
+      <circle
+        cx="32"
+        cy="32"
+        r="29"
+        fill="#0F172A"
+        stroke="#94A3B8"
+        stroke-width="2"
+      />
+
+      <g transform="rotate(${headingDeg},32,32)">
+        <path
+          d="M32 6 L25 32 L32 27 L39 32 Z"
+          fill="#F43F5E"
+        />
+
+        <path
+          d="M32 58 L25 32 L32 37 L39 32 Z"
+          fill="#E2E8F0"
+        />
+      </g>
+
+      <circle cx="32" cy="32" r="3" fill="#F8FAFC"/>
+    </svg>
+  `;
+}
+3.4.4 动态海况舷窗：src/assets/procedural/seaWindowSvg.ts
+export interface SeaWindowSvgOptions {
+  waveHeightM: number;
+  width: number;
+  height: number;
+}
+
+export function generateSeaWindowSvg(
+  options: SeaWindowSvgOptions,
+): string {
+  const {
+    waveHeightM,
+    width,
+    height,
+  } = options;
+
+  const amplitude = Math.min(
+    50,
+    Math.max(5, waveHeightM * 8),
+  );
+
+  const centerY = height * 0.55;
+
+  const wave1 = `
+    M0 ${centerY}
+    Q${width * 0.25} ${centerY - amplitude}
+     ${width * 0.5} ${centerY}
+    T${width} ${centerY}
+    L${width} ${height}
+    L0 ${height}
+    Z
+  `;
+
+  const wave2 = `
+    M0 ${centerY + 10}
+    Q${width * 0.25} ${centerY + amplitude}
+     ${width * 0.5} ${centerY + 10}
+    T${width} ${centerY + 10}
+    L${width} ${height}
+    L0 ${height}
+    Z
+  `;
+
+  return `
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="${width}"
+      height="${height}"
+      viewBox="0 0 ${width} ${height}"
+    >
+      <defs>
+        <linearGradient
+          id="seaGradient"
+          x1="0"
+          y1="0"
+          x2="0"
+          y2="1"
+        >
+          <stop offset="0%" stop-color="#7DD3FC"/>
+          <stop offset="100%" stop-color="#075985"/>
+        </linearGradient>
+      </defs>
+
+      <rect
+        width="${width}"
+        height="${height}"
+        fill="#0F172A"
+      />
+
+      <path
+        d="${wave1}"
+        fill="url(#seaGradient)"
+      />
+
+      <path
+        d="${wave2}"
+        fill="#0369A1"
+        opacity="0.65"
+      />
+
+      <rect
+        x="4"
+        y="4"
+        width="${width - 8}"
+        height="${height - 8}"
+        rx="8"
+        fill="none"
+        stroke="#94A3B8"
+        stroke-width="4"
+      />
+    </svg>
+  `;
+}
+这些 SVG 生成器均为纯函数：
+不访问 Store。  
+不访问浏览器 DOM。  
+不访问网络。  
+不修改外部状态。  
+固定参数产生固定字符串。  
+对于真正动态的海况动画，应由 SeaWindow.tsx 使用 CSS 动画或 Canvas 动画驱动；SVG 生成器只负责静态几何结构。
+
+3.5 src/components/common/GameAsset.tsx
+该组件负责：
+根据 assetId 查询 Registry。  
+展示程序化 SVG。  
+展示正式美术图片。  
+图片失败时回退。  
+提供统一的宽高、旋转和样式接口。  
+// src/components/common/GameAsset.tsx
+
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import type {
+  CSSProperties,
+} from "react";
+
+import type {
+  AssetKey,
+} from "../../types";
+
+import {
+  assetRegistry,
+  type AssetRenderRequest,
+  type ResolvedAsset,
+} from "../../assets/AssetRegistry";
+
+export interface GameAssetProps {
+  assetId: AssetKey;
+
+  width?: number;
+  height?: number;
+
+  headingDeg?: number;
+
+  vesselCategory?:
+    AssetRenderRequest["vesselCategory"];
+
+  weatherLevel?: number;
+
+  waveHeightM?: number;
+
+  className?: string;
+
+  style?: CSSProperties;
+
+  alt?: string;
+}
+
+export function GameAsset(
+  props: GameAssetProps,
+) {
+  const {
+    assetId,
+    width,
+    height,
+    headingDeg,
+    vesselCategory,
+    weatherLevel,
+    waveHeightM,
+    className,
+    style,
+    alt = "",
+  } = props;
+
+  const [resolved, setResolved] =
+    useState<ResolvedAsset | null>(null);
+
+  const [imageFailed, setImageFailed] =
+    useState(false);
+
+  useEffect(() => {
+    const request: AssetRenderRequest = {
+      assetId,
+      width,
+      height,
+      headingDeg,
+      vesselCategory,
+      weatherLevel,
+      waveHeightM,
+    };
+
+    const result = assetRegistry.resolve(request);
+
+    setResolved(result);
+    setImageFailed(false);
+  }, [
+    assetId,
+    width,
+    height,
+    headingDeg,
+    vesselCategory,
+    weatherLevel,
+    waveHeightM,
+  ]);
+
+  if (resolved === null) {
+    return (
+      <div
+        className={className}
+        style={{
+          width,
+          height,
+          ...style,
+        }}
+        aria-label={alt}
+      />
+    );
+  }
+
+  if (
+    resolved.mode === "image" &&
+    resolved.url !== undefined &&
+    !imageFailed
+  ) {
+    return (
+      <img
+        src={resolved.url}
+        width={resolved.width}
+        height={resolved.height}
+        className={className}
+        style={{
+          objectFit: "contain",
+          ...style,
+        }}
+        alt={alt}
+        onError={() => {
+          setImageFailed(true);
+        }}
+      />
+    );
+  }
+
+  if (resolved.svg !== undefined) {
+    return (
+      <div
+        className={className}
+        style={{
+          width: resolved.width,
+          height: resolved.height,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          ...style,
+        }}
+        role="img"
+        aria-label={alt}
+        dangerouslySetInnerHTML={{
+          __html: resolved.svg,
+        }}
+      />
+    );
+  }
+
+  return null;
+}
+SVG 安全要求
+上面的 dangerouslySetInnerHTML 只允许使用内部受控生成器输出。
+不得将以下内容直接写入 SVG：
+外部用户输入。  
+AIS 船名。  
+港口名称。  
+未经过 Sanitizer 的 API 数据。  
+外部 SVG 文件内容。  
+正式美术 SVG 必须通过 Sanitizer，移除 <script>、foreignObject、事件属性和非允许的外部引用。
+
+3.6 业务组件使用规范
+海图玩家船只
+<GameAsset
+  assetId="vessel.tier1.sloop"
+  width={32}
+  height={32}
+  headingDeg={playerHeading}
+  vesselCategory="Sailboat"
+  alt="Player vessel"
+/>
+HUD 舷窗
+<GameAsset
+  assetId="hud.seaWindow"
+  width={320}
+  height={160}
+  waveHeightM={weather.significantWaveHeightM}
+  alt="Current sea conditions"
+/>
+风暴图标
+<GameAsset
+  assetId="weather.storm"
+  width={48}
+  height={48}
+  weatherLevel={weather.beaufortScale}
+  alt="Storm"
+/>
+禁止：
+<img src="/assets/override/vessels/tier1_sloop.png" />
+因为直接引用图片路径会绕过 AssetRegistry，导致热替换机制失效。
+美术正式替换流程
+#chatgpt-mermaid-_r_la_{font-family:-apple-system,"system-ui","Segoe UI",sans-serif;font-size:14px;fill:rgb(255, 255, 255);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-_r_la_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-_r_la_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-_r_la_ .error-icon{fill:rgba(255, 255, 255, 0.03);}#chatgpt-mermaid-_r_la_ .error-text{fill:rgb(255, 255, 255);stroke:rgb(255, 255, 255);}#chatgpt-mermaid-_r_la_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-_r_la_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-_r_la_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-_r_la_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-_r_la_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-_r_la_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-_r_la_ .marker{fill:rgba(255, 255, 255, 0.498);stroke:rgba(255, 255, 255, 0.498);}#chatgpt-mermaid-_r_la_ .marker.cross{stroke:rgba(255, 255, 255, 0.498);}#chatgpt-mermaid-_r_la_ svg{font-family:-apple-system,"system-ui","Segoe UI",sans-serif;font-size:14px;}#chatgpt-mermaid-_r_la_ p{margin:0;}#chatgpt-mermaid-_r_la_ .label{font-family:-apple-system,"system-ui","Segoe UI",sans-serif;color:rgb(255, 255, 255);}#chatgpt-mermaid-_r_la_ .cluster-label text{fill:rgb(255, 255, 255);}#chatgpt-mermaid-_r_la_ .cluster-label span{color:rgb(255, 255, 255);}#chatgpt-mermaid-_r_la_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-_r_la_ .label text,#chatgpt-mermaid-_r_la_ span{fill:rgb(255, 255, 255);color:rgb(255, 255, 255);}#chatgpt-mermaid-_r_la_ .node rect,#chatgpt-mermaid-_r_la_ .node circle,#chatgpt-mermaid-_r_la_ .node ellipse,#chatgpt-mermaid-_r_la_ .node polygon,#chatgpt-mermaid-_r_la_ .node path{fill:rgb(26, 40, 61);stroke:rgb(31, 78, 148);stroke-width:1px;}#chatgpt-mermaid-_r_la_ .rough-node .label text,#chatgpt-mermaid-_r_la_ .node .label text,#chatgpt-mermaid-_r_la_ .image-shape .label,#chatgpt-mermaid-_r_la_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-_r_la_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-_r_la_ .rough-node .label,#chatgpt-mermaid-_r_la_ .node .label,#chatgpt-mermaid-_r_la_ .image-shape .label,#chatgpt-mermaid-_r_la_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-_r_la_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-_r_la_ .root .anchor path{fill:rgba(255, 255, 255, 0.498)!important;stroke-width:0;stroke:rgba(255, 255, 255, 0.498);}#chatgpt-mermaid-_r_la_ .arrowheadPath{fill:rgba(255, 255, 255, 0.498);}#chatgpt-mermaid-_r_la_ .edgePath .path{stroke:rgba(255, 255, 255, 0.498);stroke-width:1px;}#chatgpt-mermaid-_r_la_ .flowchart-link{stroke:rgba(255, 255, 255, 0.498);fill:none;}#chatgpt-mermaid-_r_la_ .edgeLabel{background-color:rgb(24, 24, 24);text-align:center;}#chatgpt-mermaid-_r_la_ .edgeLabel p{background-color:rgb(24, 24, 24);}#chatgpt-mermaid-_r_la_ .edgeLabel rect{opacity:0.5;background-color:rgb(24, 24, 24);fill:rgb(24, 24, 24);}#chatgpt-mermaid-_r_la_ .labelBkg{background-color:rgba(24, 24, 24, 0.5);}#chatgpt-mermaid-_r_la_ .cluster rect{fill:rgba(255, 255, 255, 0.03);stroke:rgba(255, 255, 255, 0.082);stroke-width:1px;}#chatgpt-mermaid-_r_la_ .cluster text{fill:rgb(255, 255, 255);}#chatgpt-mermaid-_r_la_ .cluster span{color:rgb(255, 255, 255);}#chatgpt-mermaid-_r_la_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system,"system-ui","Segoe UI",sans-serif;font-size:12px;background:rgba(255, 255, 255, 0.03);border:1px solid rgba(255, 255, 255, 0.082);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-_r_la_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(255, 255, 255);}#chatgpt-mermaid-_r_la_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-_r_la_ .icon-shape,#chatgpt-mermaid-_r_la_ .image-shape{background-color:rgb(24, 24, 24);text-align:center;}#chatgpt-mermaid-_r_la_ .icon-shape p,#chatgpt-mermaid-_r_la_ .image-shape p{background-color:rgb(24, 24, 24);padding:2px;}#chatgpt-mermaid-_r_la_ .icon-shape .label rect,#chatgpt-mermaid-_r_la_ .image-shape .label rect{opacity:0.5;background-color:rgb(24, 24, 24);fill:rgb(24, 24, 24);}#chatgpt-mermaid-_r_la_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-_r_la_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-_r_la_ .node .neo-node{stroke:rgb(31, 78, 148);}#chatgpt-mermaid-_r_la_ [data-look="neo"].node rect,#chatgpt-mermaid-_r_la_ [data-look="neo"].cluster rect,#chatgpt-mermaid-_r_la_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-_r_la_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_la_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-_r_la_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-_r_la_-gradient);stroke-width:1px;}#chatgpt-mermaid-_r_la_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_la_ [data-look="neo"].node .neo-line path{stroke:rgb(31, 78, 148);filter:none;}#chatgpt-mermaid-_r_la_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-_r_la_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_la_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-_r_la_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-_r_la_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_la_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-_r_la_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_la_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(153, 206, 255);}#chatgpt-mermaid-_r_la_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(153, 206, 255);}#chatgpt-mermaid-_r_la_ .node tspan[font-weight="normal"],#chatgpt-mermaid-_r_la_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-_r_la_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-width:1px;}#chatgpt-mermaid-_r_la_ .node rect,#chatgpt-mermaid-_r_la_ .node circle,#chatgpt-mermaid-_r_la_ .node ellipse,#chatgpt-mermaid-_r_la_ .node polygon,#chatgpt-mermaid-_r_la_ .node path{fill:rgb(0, 40, 77);stroke:rgba(255, 255, 255, 0.1);stroke-width:1px;}#chatgpt-mermaid-_r_la_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-_r_la_ .mermaid-decision .label-container{fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-dasharray:2,2;}#chatgpt-mermaid-_r_la_ .edgePaths .flowchart-link{stroke:rgba(255, 255, 255, 0.498);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-_r_la_ .marker{fill:rgba(255, 255, 255, 0.498);stroke:rgba(255, 255, 255, 0.498);}#chatgpt-mermaid-_r_la_ :root{--mermaid-font-family:-apple-system,"system-ui","Segoe UI",sans-serif;}程序化 SVG 初始版本美术制作正式图片导出 tier1_sloop.png放入public/assets/override/vessels/Manifest mode=imageGameAsset 自动加载正式图片HUD / 海图 / 船厂统一替换
+美术替换时只需：
+生成 tier1_sloop.png。  
+放入 /public/assets/override/vessels/。  
+Manifest 中设置 mode: "image"。  
+保持原 assetId 不变。  
+业务组件不需要修改。
+需要强调：单纯将图片放入目录不会自动切换。若 Manifest 仍然是 mode: "procedural"，则继续显示程序化图形。可通过开发工具提供的“自动发现 Override”功能扫描资源并生成 Manifest，但这属于构建期能力，而非浏览器运行时自动扫描目录。
+
+第四部分：6 个职能 Coding Agent 并行分工任务书
+4.1 Agent 职责划分与文件所有权
+并行开发基线：6 个 Agent
+Agent 1
+Core-Physics-Engine
+航行数学、物理、经济纯函数、配置
+Agent 2
+RealWorld-Data-Services
+天气、AIS、GEBCO、港口适配器
+Agent 3
+State-And-GameLoop-Controller
+Zustand、游戏循环、存档、离线结算调度
+Agent 4
+WebGIS-And-DeckGL-Map
+地图底图、AIS 图层、航线、风场
+Agent 5
+Bridge-HUD-And-Procedural-Assets
+程序化资产、驾驶台 HUD、仪表
+Agent 6
+Port-Economy-And-Capacitor-Shell
+港口 UI、船厂、原生平台封装
+Agent 1：Core-Physics-Engine
+职责边界
+负责所有确定性纯函数、物理算法、经济计算和静态配置。
+Owned Files
+src/config/vessels.ts
+src/config/ports.ts
+src/config/commodities.ts
+src/config/upgrades.ts
+src/config/captainPerks.ts
+src/config/economy.ts
+src/config/physics.ts
+src/config/gameBalance.ts
+src/config/index.ts
+
+src/core/index.ts
+
+src/core/physics/engine.ts
+src/core/physics/fuel.ts
+src/core/physics/sail.ts
+src/core/physics/windage.ts
+src/core/physics/waves.ts
+src/core/physics/current.ts
+src/core/physics/draft.ts
+src/core/physics/grounding.ts
+src/core/physics/navigation.ts
+
+src/core/economy/trade.ts
+src/core/economy/supplies.ts
+src/core/economy/maintenance.ts
+src/core/economy/crew.ts
+src/core/economy/upgrades.ts
+
+src/core/route/greatCircle.ts
+src/core/route/routeCost.ts
+src/core/route/routeValidation.ts
+
+src/core/ais/deadReckoning.ts
+src/core/ais/targetInterpolation.ts
+
+src/core/simulation/tick.ts
+src/core/simulation/offlineSettlement.ts
+src/core/simulation/timeScale.ts
+Read-Only Dependencies
+src/types/index.ts
+src/types/navigation.ts
+src/types/economy.ts
+精确函数签名
+src/core/physics/engine.ts
+import type {
+  EngineTelegraph,
+  VesselSpec,
+} from "../../types";
+
+export function getPowerRatio(
+  telegraph: EngineTelegraph,
+): number;
+
+export function calculateTargetSpeed(
+  telegraph: EngineTelegraph,
+  vessel: VesselSpec,
+): number;
+src/core/physics/fuel.ts
+import type {
+  VesselSpec,
+} from "../../types";
+
+export function calculateMainFuelRateKgH(
+  speedKn: number,
+  vessel: VesselSpec,
+): number;
+
+export function calculateTotalFuelRateKgH(
+  speedKn: number,
+  vessel: VesselSpec,
+): number;
+
+export function calculateFuelConsumptionT(
+  fuelRateKgH: number,
+  durationHours: number,
+): number;
+src/core/physics/sail.ts
+export function calculatePolarEfficiency(
+  awaDeg: number,
+): number;
+
+export function calculateSailSpeed(
+  awaDeg: number,
+  trueWindKn: number,
+  maxSailSpeedKn: number,
+): number;
+src/core/physics/grounding.ts
+import type {
+  PlayerVesselState,
+} from "../../types";
+
+export function isGrounded(
+  bathymetryM: number,
+  currentDraftM: number,
+  underKeelClearanceM: number,
+): boolean;
+
+export function calculateRefloatProbability(
+  bathymetryM: number,
+  currentDraftM: number,
+  underKeelClearanceM: number,
+): number;
+src/core/route/greatCircle.ts
+import type {
+  GeoPosition,
+  PlannedRoute,
+} from "../../types";
+
+export function calculateGreatCircleDistanceNM(
+  start: GeoPosition,
+  end: GeoPosition,
+): number;
+
+export function generateGreatCircleRoute(
+  start: GeoPosition,
+  end: GeoPosition,
+  segmentCount: number,
+): GeoPosition[];
+
+export function calculateRouteDurationHours(
+  distanceNM: number,
+  speedKn: number,
+): number;
+src/core/simulation/offlineSettlement.ts
+import type {
+  PlayerVesselState,
+  SimulationResult,
+  VesselSpec,
+} from "../../types";
+
+export function calculateOfflineSettlement(
+  vessel: PlayerVesselState,
+  vesselSpec: VesselSpec,
+  elapsedRealMs: number,
+  timeScale: number,
+): SimulationResult;
+Agent 1 专属 System Prompt
+你是 Core-Physics-Engine Agent。
+
+你只负责 src/core/* 与 src/config/*。
+
+必须遵守：
+
+1. 只修改 Owned Files。
+2. src/types/index.ts 为只读接口契约。
+3. 所有计算必须是纯函数。
+4. 禁止隐式 any。
+5. 禁止访问 DOM、React、Zustand、网络、LocalStorage。
+6. 所有单位必须明确。
+7. 所有公式必须可重复计算。
+8. 每个纯函数必须提供 Vitest 单元测试。
+9. 单文件不超过 250 行。
+10. 不得擅自新增或修改全局接口。
+11. 发现契约缺失时输出接口变更申请，不自行修改 types。
+12. 必须保证输入边界和 NaN/Infinity 的处理明确。
+
+提交前运行：
+npm run typecheck
+npm run test
+
+Agent 2：RealWorld-Data-Services
+职责边界
+负责外部真实数据的采集、转换、缓存、重连与模拟数据混合。
+不负责物理模拟、不负责 Store、不负责 UI。
+Owned Files
+src/services/weather/openMeteoClient.ts
+src/services/weather/weatherAdapter.ts
+src/services/weather/weatherCache.ts
+src/services/weather/weatherService.ts
+
+src/services/ais/aisstreamClient.ts
+src/services/ais/aisAdapter.ts
+src/services/ais/aisConnectionManager.ts
+src/services/ais/syntheticVesselGenerator.ts
+src/services/ais/aisService.ts
+
+src/services/bathymetry/bathymetryAdapter.ts
+src/services/bathymetry/bathymetryCache.ts
+src/services/bathymetry/bathymetryService.ts
+
+src/services/ports/portAdapter.ts
+src/services/ports/portService.ts
+Read-Only Dependencies
+src/types/index.ts
+src/types/services.ts
+src/core/ais/deadReckoning.ts
+src/core/ais/targetInterpolation.ts
+精确函数签名
+weatherService.ts
+import type {
+  MarineWeatherCell,
+  WeatherQuery,
+  ServiceResult,
+} from "../../types";
+
+export interface WeatherService {
+  getWeather(
+    query: WeatherQuery,
+  signal?: AbortSignal,
+  ): Promise<ServiceResult<MarineWeatherCell>>;
+}
+aisService.ts
+import type {
+  AISVesselTarget,
+  AISQuery,
+} from "../../types";
+
+export interface AISService {
+  connect(): Promise<void>;
+
+  disconnect(): Promise<void>;
+
+  queryTargets(
+    query: AISQuery,
+  ): Promise<AISVesselTarget[]>;
+
+  subscribe(
+    callback: (targets: AISVesselTarget[]) => void,
+  ): () => void;
+}
+syntheticVesselGenerator.ts
+import type {
+  AISVesselTarget,
+  GeoPosition,
+} from "../../types";
+
+export function generateSyntheticVessel(
+  vesselId: string,
+  position: GeoPosition,
+  seed: number,
+): AISVesselTarget;
+bathymetryService.ts
+import type {
+  BathymetrySample,
+  GeoPosition,
+} from "../../types";
+
+export interface BathymetryService {
+  sampleDepth(
+    position: GeoPosition,
+  ): Promise<BathymetrySample>;
+}
+portService.ts
+import type {
+  PortInfo,
+  GeoPosition,
+} from "../../types";
+
+export interface PortService {
+  getPortById(
+    portId: string,
+  ): Promise<PortInfo | null>;
+
+  getNearestPorts(
+    position: GeoPosition,
+    radiusNM: number,
+  ): Promise<PortInfo[]>;
+}
+Agent 2 专属 System Prompt
+你是 RealWorld-Data-Services Agent。
+
+只修改 src/services/*。
+
+你的任务是将外部数据转换为标准契约，
+不能把 API 原始 JSON 直接传入游戏状态。
+
+必须遵守：
+
+1. src/types/* 是只读契约。
+2. 禁止修改 src/core/*。
+3. 禁止修改 src/store/*。
+4. 所有网络请求必须支持 AbortSignal。
+5. 所有 WebSocket 必须具备断线重连机制。
+6. 所有服务必须支持缓存和 stale 标记。
+7. REAL_LIVE、SYNTHETIC_OCEAN、HISTORICAL 必须严格区分。
+8. 不得伪造 REAL_LIVE 数据。
+9. 真实 AIS 数据只能作为观测数据。
+10. 单文件不超过 250 行。
+11. 必须编写 Mock API 单元测试。
+
+不得在 AIS 目标上实现向真实船舶发送游戏指令的功能。
+
+Agent 3：State-And-GameLoop-Controller
+职责边界
+负责：
+Zustand 状态切片。  
+状态统一组装。  
+RAF 调度。  
+1×~60× 时间倍率。  
+存档。  
+离线时间差结算调度。  
+状态选择器。  
+Owned Files
+src/store/index.ts
+src/store/types.ts
+
+src/store/slices/shipSlice.ts
+src/store/slices/navigationSlice.ts
+src/store/slices/economySlice.ts
+src/store/slices/worldSlice.ts
+src/store/slices/uiModalSlice.ts
+
+src/store/selectors/shipSelectors.ts
+src/store/selectors/navigationSelectors.ts
+src/store/selectors/economySelectors.ts
+
+src/store/persistence/persistConfig.ts
+src/store/persistence/migrateSave.ts
+src/store/persistence/offlineClock.ts
+
+src/store/gameLoop/gameLoop.ts
+src/store/gameLoop/simulationScheduler.ts
+src/store/gameLoop/gameTimeController.ts
+Read-Only Dependencies
+src/types/index.ts
+src/core/*
+src/config/*
+Store 统一结构
+import type {
+  PlayerVesselState,
+  GameClockState,
+  GameSaveData,
+  PlannedRoute,
+} from "../types";
+
+export interface ShipSlice {
+  activeVessel: PlayerVesselState;
+
+  setActiveVessel(
+    vessel: PlayerVesselState,
+  ): void;
+
+  updateVesselState(
+    vessel: PlayerVesselState,
+  ): void;
+}
+
+export interface NavigationSlice {
+  activeRoute: PlannedRoute | null;
+
+  setActiveRoute(
+    route: PlannedRoute | null,
+  ): void;
+}
+
+export interface EconomySlice {
+  credits: number;
+
+  addCredits(
+    amount: number,
+  ): void;
+
+  spendCredits(
+    amount: number,
+  ): boolean;
+}
+
+export interface WorldSlice {
+  discoveredPortIds: string[];
+
+  addDiscoveredPort(
+    portId: string,
+  ): void;
+}
+
+export interface UIModalSlice {
+  activeModal:
+    | "TRADE"
+    | "SHIPYARD"
+    | "AIS_DETAIL"
+    | "JOURNAL"
+    | "MAYDAY"
+    | null;
+
+  openModal(
+    modal: UIModalSlice["activeModal"],
+  ): void;
+
+  closeModal(): void;
+}
+
+export interface GameStore
+  extends ShipSlice,
+    NavigationSlice,
+    EconomySlice,
+    WorldSlice,
+    UIModalSlice {
+  gameClock: GameClockState;
+
+  saveGame(): GameSaveData;
+}
+精确函数签名
+gameLoop.ts
+export interface GameLoopController {
+  start(): void;
+
+  stop(): void;
+
+  pause(): void;
+
+  resume(): void;
+
+  setTimeScale(
+    scale: 1 | 2 | 5 | 10 | 30 | 60,
+  ): void;
+}
+
+export function createGameLoop(
+  onSimulationTick: (deltaMs: number) => void,
+): GameLoopController;
+simulationScheduler.ts
+export interface SimulationScheduler {
+  advance(
+    elapsedRealMs: number,
+    timeScale: number,
+  ): void;
+
+  reset(): void;
+}
+
+export function createSimulationScheduler(
+  fixedStepMs: number,
+  onFixedStep: (gameDeltaMs: number) => void,
+): SimulationScheduler;
+offlineClock.ts
+import type {
+  UnixMs,
+} from "../../types";
+
+export function calculateOfflineElapsedMs(
+  lastOnlineTimestamp: UnixMs,
+  currentTimestamp: UnixMs,
+  maxOfflineHours: number,
+): number;
+Agent 3 专属 System Prompt
+你是 State-And-GameLoop-Controller Agent。
+
+只修改 src/store/*。
+
+必须遵守：
+
+1. Store 是动态游戏状态唯一真相源。
+2. 所有状态更新必须通过 Action。
+3. Zustand 状态必须保持不可变。
+4. 使用 Immer Middleware。
+5. 禁止在 Store 中重复实现物理公式。
+6. 所有物理计算调用 src/core 的纯函数。
+7. 禁止 UI 组件直接修改 Store 内部对象。
+8. RAF 只负责调度，不允许每帧产生 React 全局刷新。
+9. 存档必须有 saveVersion 和 Migration。
+10. 不得持久化真实 AIS 高频观测流。
+11. 不得把天气缓存无限写入 LocalStorage。
+12. 单文件不超过 250 行。
+13. 必须测试时间倍率、离线时间差、存档迁移和跨 Slice 状态一致性。
+
+不得修改公共接口。
+
+Agent 4：WebGIS-And-DeckGL-Map
+职责边界
+负责海图渲染和空间可视化。
+禁止在地图 Layer 内实现航行物理、贸易或补给逻辑。
+Owned Files
+src/components/map/MapContainer.tsx
+src/components/map/mapStyle.ts
+src/components/map/MapInteractionController.ts
+src/components/map/DeckOverlay.tsx
+
+src/components/map/PlayerVesselLayer.ts
+src/components/map/AISFleetLayer.ts
+src/components/map/RouteLayer.ts
+src/components/map/WindParticleLayer.ts
+src/components/map/RangeRingLayer.ts
+src/components/map/PortLayer.ts
+Read-Only Dependencies
+src/types/index.ts
+src/store/index.ts
+src/store/selectors/*
+src/assets/AssetRegistry.ts
+src/components/common/GameAsset.tsx
+精确函数签名
+MapContainer.tsx
+import type {
+  GeoPosition,
+} from "../../types";
+
+export interface MapContainerProps {
+  initialPosition: GeoPosition;
+
+  initialZoom: number;
+
+  onMapReady: () => void;
+}
+
+export function MapContainer(
+  props: MapContainerProps,
+): JSX.Element;
+AISFleetLayer.ts
+import type {
+  AISVesselTarget,
+} from "../../types";
+
+export function createAISFleetLayer(
+  targets: AISVesselTarget[],
+): Layer;
+PlayerVesselLayer.ts
+import type {
+  PlayerVesselState,
+} from "../../types";
+
+export function createPlayerVesselLayer(
+  vessel: PlayerVesselState,
+): Layer;
+RouteLayer.ts
+import type {
+  PlannedRoute,
+} from "../../types";
+
+export function createRouteLayer(
+  route: PlannedRoute,
+): Layer;
+RangeRingLayer.ts
+import type {
+  GeoPosition,
+} from "../../types";
+
+export function createRangeRingLayer(
+  center: GeoPosition,
+  radiusNM: number,
+): Layer;
+Agent 4 专属 System Prompt
+你是 WebGIS-And-DeckGL-Map Agent。
+
+只修改 src/components/map/*。
+
+必须遵守：
+
+1. MapLibre 管理底图。
+2. Deck.gl 管理动态覆盖层。
+3. AIS 目标使用 GPU 高效批量渲染。
+4. 禁止每艘船创建独立 React DOM 节点。
+5. 不允许地图组件实现物理模拟。
+6. 所有数据来自 Store Selector。
+7. 所有船舶图标使用 GameAsset / AssetRegistry。
+8. 不能直接引用 public/assets 中的原始路径。
+9. 地理坐标统一 WGS84。
+10. Layer 更新必须支持数据增量刷新。
+11. 不得自行修改 Store 或 Types。
+12. 单文件不超过 250 行。
+
+必须测试地图初始化、Layer 更新、空 AIS 数据及大量 AIS 数据渲染。
+
+Agent 5：Bridge-HUD-And-Procedural-Assets
+职责边界
+负责程序化 SVG/Canvas 生成器与驾驶台 HUD。
+Owned Files
+src/assets/AssetRegistry.ts
+src/assets/assetManifest.ts
+src/assets/assetManifestLoader.ts
+
+src/assets/procedural/index.ts
+src/assets/procedural/vesselSvg.ts
+src/assets/procedural/weatherSvg.ts
+src/assets/procedural/compassSvg.ts
+src/assets/procedural/portSvg.ts
+src/assets/procedural/cargoSvg.ts
+src/assets/procedural/gaugeSvg.ts
+src/assets/procedural/seaWindowSvg.ts
+
+src/assets/utils/svgSanitizer.ts
+src/assets/utils/assetUrl.ts
+
+src/components/common/GameAsset.tsx
+
+src/components/hud/BridgeHUD.tsx
+src/components/hud/EngineTelegraph.tsx
+src/components/hud/CompassHUD.tsx
+src/components/hud/WindInstrument.tsx
+src/components/hud/SupplyGauge.tsx
+src/components/hud/SeaWindow.tsx
+src/components/hud/VHFPanel.tsx
+src/components/hud/SpeedLog.tsx
+src/components/hud/ShipStatusPanel.tsx
+Read-Only Dependencies
+src/types/index.ts
+src/store/index.ts
+src/store/selectors/*
+src/config/*
+精确函数签名
+export function generateVesselSvg(
+  options: VesselSvgOptions,
+): string;
+
+export function generateWeatherSvg(
+  options: WeatherSvgOptions,
+): string;
+
+export function generateCompassSvg(
+  options: CompassSvgOptions,
+): string;
+
+export function generateSeaWindowSvg(
+  options: SeaWindowSvgOptions,
+): string;
+HUD：
+export function EngineTelegraph(): JSX.Element;
+
+export function CompassHUD(): JSX.Element;
+
+export function WindInstrument(): JSX.Element;
+
+export function SupplyGauge(
+  props: SupplyGaugeProps,
+): JSX.Element;
+
+export function SeaWindow(): JSX.Element;
+
+export function VHFPanel(): JSX.Element;
+
+export function ShipStatusPanel(): JSX.Element;
+Agent 5 专属 System Prompt
+你是 Bridge-HUD-And-Procedural-Assets Agent。
+
+只修改 src/assets/* 和 src/components/hud/*，
+以及明确归属你的 GameAsset.tsx。
+
+必须遵守：
+
+1. 所有资源以 AssetKey 为唯一标识。
+2. 程序化 SVG 生成器必须是纯函数。
+3. Manifest 是资产模式的唯一配置源。
+4. 业务 HUD 不允许直接写 SVG 字符串。
+5. HUD 不允许计算油耗、航速或物理损伤。
+6. 所有状态来自 Store Selector。
+7. 所有资产必须支持 fallback。
+8. 所有 SVG 必须安全过滤。
+9. 禁止使用隐式 any。
+10. 单文件不超过 250 行。
+
+必须提供每个生成器的固定输入/固定输出测试。
+
+Agent 6：Port-Economy-And-Capacitor-Shell
+职责边界
+负责港口贸易、船厂、图鉴和 Capacitor 原生封装。
+Agent 6 不负责实现贸易计算公式；交易金额由 Agent 1 的 Core 提供，交易状态由 Agent 3 的 Store 提供。
+Owned Files
+src/components/modals/PortTradeModal.tsx
+src/components/modals/ShipyardModal.tsx
+src/components/modals/AISDetailModal.tsx
+src/components/modals/ShipSpottingModal.tsx
+src/components/modals/ExplorationJournalModal.tsx
+src/components/modals/MaydayModal.tsx
+
+src/platform/haptics.ts
+src/platform/notifications.ts
+src/platform/appLifecycle.ts
+src/platform/safeArea.ts
+src/platform/platformAdapter.ts
+Read-Only Dependencies
+src/types/index.ts
+src/config/*
+src/core/economy/*
+src/store/index.ts
+src/assets/AssetRegistry.ts
+src/components/common/GameAsset.tsx
+精确函数签名
+haptics.ts
+export type HapticPattern =
+  | "ENGINE_CHANGE"
+  | "WAVE_IMPACT"
+  | "ALERT"
+  | "CONFIRM";
+
+export function triggerHaptic(
+  pattern: HapticPattern,
+): Promise<void>;
+notifications.ts
+export interface LocalNotificationRequest {
+  id: number;
+
+  title: string;
+  body: string;
+
+  scheduledAt: Date;
+}
+
+export function scheduleLocalNotification(
+  request: LocalNotificationRequest,
+): Promise<void>;
+
+export function cancelLocalNotification(
+  id: number,
+): Promise<void>;
+safeArea.ts
+export interface SafeAreaInsets {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+}
+
+export function getSafeAreaInsets():
+  SafeAreaInsets;
+platformAdapter.ts
+export type PlatformType =
+  | "WEB"
+  | "IOS"
+  | "ANDROID";
+
+export function getPlatformType():
+  PlatformType;
+
+export function isNativePlatform():
+  boolean;
+Agent 6 专属 System Prompt
+你是 Port-Economy-And-Capacitor-Shell Agent。
+
+只修改 src/components/modals/* 和 src/platform/*。
+
+必须遵守：
+
+1. 所有交易调用 Core 纯函数。
+2. 所有 Credits 变更通过 Store Action。
+3. 禁止组件直接修改货物库存。
+4. 禁止直接调用未经封装的 Capacitor Plugin。
+5. Web 环境必须支持安全降级。
+6. 所有 Modal 必须支持关闭、取消和错误提示。
+7. 所有原生权限请求必须由用户触发。
+8. 本地通知必须经过游戏状态校验。
+9. 禁止向现实 AIS 船只发送 VHF 或 Mayday 指令。
+10. 不得修改 Types、Core、Store、Map、HUD。
+11. 单文件不超过 250 行。
+
+必须提供 Web Mock 和 Capacitor Native 两种测试路径。
+
+第五部分：集成联调与验收标准
+5.1 集成策略：Step 1 ~ Step 4
+采用 Contract-First 集成，不允许 6 个 Agent 开发完成后直接合并全部代码。
+#chatgpt-mermaid-_r_tj_{font-family:-apple-system,"system-ui","Segoe UI",sans-serif;font-size:14px;fill:rgb(255, 255, 255);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-_r_tj_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-_r_tj_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-_r_tj_ .error-icon{fill:rgba(255, 255, 255, 0.03);}#chatgpt-mermaid-_r_tj_ .error-text{fill:rgb(255, 255, 255);stroke:rgb(255, 255, 255);}#chatgpt-mermaid-_r_tj_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-_r_tj_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-_r_tj_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-_r_tj_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-_r_tj_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-_r_tj_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-_r_tj_ .marker{fill:rgba(255, 255, 255, 0.498);stroke:rgba(255, 255, 255, 0.498);}#chatgpt-mermaid-_r_tj_ .marker.cross{stroke:rgba(255, 255, 255, 0.498);}#chatgpt-mermaid-_r_tj_ svg{font-family:-apple-system,"system-ui","Segoe UI",sans-serif;font-size:14px;}#chatgpt-mermaid-_r_tj_ p{margin:0;}#chatgpt-mermaid-_r_tj_ .label{font-family:-apple-system,"system-ui","Segoe UI",sans-serif;color:rgb(255, 255, 255);}#chatgpt-mermaid-_r_tj_ .cluster-label text{fill:rgb(255, 255, 255);}#chatgpt-mermaid-_r_tj_ .cluster-label span{color:rgb(255, 255, 255);}#chatgpt-mermaid-_r_tj_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-_r_tj_ .label text,#chatgpt-mermaid-_r_tj_ span{fill:rgb(255, 255, 255);color:rgb(255, 255, 255);}#chatgpt-mermaid-_r_tj_ .node rect,#chatgpt-mermaid-_r_tj_ .node circle,#chatgpt-mermaid-_r_tj_ .node ellipse,#chatgpt-mermaid-_r_tj_ .node polygon,#chatgpt-mermaid-_r_tj_ .node path{fill:rgb(26, 40, 61);stroke:rgb(31, 78, 148);stroke-width:1px;}#chatgpt-mermaid-_r_tj_ .rough-node .label text,#chatgpt-mermaid-_r_tj_ .node .label text,#chatgpt-mermaid-_r_tj_ .image-shape .label,#chatgpt-mermaid-_r_tj_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-_r_tj_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-_r_tj_ .rough-node .label,#chatgpt-mermaid-_r_tj_ .node .label,#chatgpt-mermaid-_r_tj_ .image-shape .label,#chatgpt-mermaid-_r_tj_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-_r_tj_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-_r_tj_ .root .anchor path{fill:rgba(255, 255, 255, 0.498)!important;stroke-width:0;stroke:rgba(255, 255, 255, 0.498);}#chatgpt-mermaid-_r_tj_ .arrowheadPath{fill:rgba(255, 255, 255, 0.498);}#chatgpt-mermaid-_r_tj_ .edgePath .path{stroke:rgba(255, 255, 255, 0.498);stroke-width:1px;}#chatgpt-mermaid-_r_tj_ .flowchart-link{stroke:rgba(255, 255, 255, 0.498);fill:none;}#chatgpt-mermaid-_r_tj_ .edgeLabel{background-color:rgb(24, 24, 24);text-align:center;}#chatgpt-mermaid-_r_tj_ .edgeLabel p{background-color:rgb(24, 24, 24);}#chatgpt-mermaid-_r_tj_ .edgeLabel rect{opacity:0.5;background-color:rgb(24, 24, 24);fill:rgb(24, 24, 24);}#chatgpt-mermaid-_r_tj_ .labelBkg{background-color:rgba(24, 24, 24, 0.5);}#chatgpt-mermaid-_r_tj_ .cluster rect{fill:rgba(255, 255, 255, 0.03);stroke:rgba(255, 255, 255, 0.082);stroke-width:1px;}#chatgpt-mermaid-_r_tj_ .cluster text{fill:rgb(255, 255, 255);}#chatgpt-mermaid-_r_tj_ .cluster span{color:rgb(255, 255, 255);}#chatgpt-mermaid-_r_tj_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system,"system-ui","Segoe UI",sans-serif;font-size:12px;background:rgba(255, 255, 255, 0.03);border:1px solid rgba(255, 255, 255, 0.082);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-_r_tj_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(255, 255, 255);}#chatgpt-mermaid-_r_tj_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-_r_tj_ .icon-shape,#chatgpt-mermaid-_r_tj_ .image-shape{background-color:rgb(24, 24, 24);text-align:center;}#chatgpt-mermaid-_r_tj_ .icon-shape p,#chatgpt-mermaid-_r_tj_ .image-shape p{background-color:rgb(24, 24, 24);padding:2px;}#chatgpt-mermaid-_r_tj_ .icon-shape .label rect,#chatgpt-mermaid-_r_tj_ .image-shape .label rect{opacity:0.5;background-color:rgb(24, 24, 24);fill:rgb(24, 24, 24);}#chatgpt-mermaid-_r_tj_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-_r_tj_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-_r_tj_ .node .neo-node{stroke:rgb(31, 78, 148);}#chatgpt-mermaid-_r_tj_ [data-look="neo"].node rect,#chatgpt-mermaid-_r_tj_ [data-look="neo"].cluster rect,#chatgpt-mermaid-_r_tj_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-_r_tj_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_tj_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-_r_tj_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-_r_tj_-gradient);stroke-width:1px;}#chatgpt-mermaid-_r_tj_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_tj_ [data-look="neo"].node .neo-line path{stroke:rgb(31, 78, 148);filter:none;}#chatgpt-mermaid-_r_tj_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-_r_tj_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_tj_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-_r_tj_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-_r_tj_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_tj_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-_r_tj_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_tj_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(153, 206, 255);}#chatgpt-mermaid-_r_tj_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(153, 206, 255);}#chatgpt-mermaid-_r_tj_ .node tspan[font-weight="normal"],#chatgpt-mermaid-_r_tj_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-_r_tj_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-width:1px;}#chatgpt-mermaid-_r_tj_ .node rect,#chatgpt-mermaid-_r_tj_ .node circle,#chatgpt-mermaid-_r_tj_ .node ellipse,#chatgpt-mermaid-_r_tj_ .node polygon,#chatgpt-mermaid-_r_tj_ .node path{fill:rgb(0, 40, 77);stroke:rgba(255, 255, 255, 0.1);stroke-width:1px;}#chatgpt-mermaid-_r_tj_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-_r_tj_ .mermaid-decision .label-container{fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-dasharray:2,2;}#chatgpt-mermaid-_r_tj_ .edgePaths .flowchart-link{stroke:rgba(255, 255, 255, 0.498);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-_r_tj_ .marker{fill:rgba(255, 255, 255, 0.498);stroke:rgba(255, 255, 255, 0.498);}#chatgpt-mermaid-_r_tj_ :root{--mermaid-font-family:-apple-system,"system-ui","Segoe UI",sans-serif;}Step 1：冻结契约与工程骨架Step 2：并行开发与独立单测Step 3：模块集成与接口联调Step4：端到端验收与原生打包Agent 1 CoreAgent 2 ServicesAgent 3 StoreAgent 4 MapAgent 5 HUD / AssetsAgent 6 Modals / Platform
+Step 1：冻结契约与工程骨架
+Gate 1
+架构负责人执行。
+工作内容
+创建 Vite + React 18 + TypeScript Strict 项目。  
+创建完整目录结构。  
+创建 src/types/index.ts。  
+创建所有 Agent 的 Owned Files 清单。  
+建立 Vitest 测试环境。  
+建立 ESLint 和 Prettier。  
+建立 Git Worktree 分支规范。  
+创建 Mock Fixtures。  
+验收标准
+npm ci
+npm run typecheck
+npm run lint
+npm run test
+npm run build
+全部通过。
+冻结后：
+Agent 1~6 只能读取 src/types/index.ts。  
+所有公共接口修改由架构负责人审批。  
+Agent 不允许自行安装额外依赖。  
+
+Step 2：并行开发与独立单元测试
+Gate 2
+6 个 Agent 同时工作。
+各 Agent 测试断言
+Agent 1：Core Physics
+src/core/physics/engine.test.ts
+import { describe, expect, it } from "vitest";
+
+import {
+  getPowerRatio,
+  calculateTargetSpeed,
+} from "./engine";
+
+describe("Engine", () => {
+  it("STOP power must equal zero", () => {
+    expect(getPowerRatio("STOP")).toBe(0);
+  });
+
+  it("FULL power must equal one", () => {
+    expect(getPowerRatio("FULL")).toBe(1);
+  });
+
+  it("FLANK power must equal 1.15", () => {
+    expect(getPowerRatio("FLANK")).toBe(1.15);
+  });
+});
+src/core/physics/fuel.test.ts
+import { describe, expect, it } from "vitest";
+
+import {
+  calculateFuelConsumptionT,
+} from "./fuel";
+
+describe("Fuel", () => {
+  it("converts kg/h into tons", () => {
+    expect(
+      calculateFuelConsumptionT(100, 10),
+    ).toBe(1);
+  });
+
+  it("zero duration consumes zero fuel", () => {
+    expect(
+      calculateFuelConsumptionT(100, 0),
+    ).toBe(0);
+  });
+});
+src/core/route/greatCircle.test.ts
+import { describe, expect, it } from "vitest";
+
+import {
+  calculateGreatCircleDistanceNM,
+} from "./greatCircle";
+
+describe("GreatCircle", () => {
+  it("same coordinates produce zero distance", () => {
+    const point = {
+      latitude: 0 as never,
+      longitude: 0 as never,
+    };
+
+    expect(
+      calculateGreatCircleDistanceNM(point, point),
+    ).toBe(0);
+  });
+});
+生产测试中应使用明确的 Brand 构造函数替代示例中的 as never。该写法仅展示测试断言形式，不应成为项目的类型绕过规范。
+Agent 2：Data Services
+必须验证：
+Assertion
+预期
+Open-Meteo 请求失败
+返回可恢复错误
+天气缓存命中
+返回缓存数据
+缓存过期
+stale = true
+AIS WebSocket 断开
+自动重连
+AIS 原始数据转换
+MMSI、COG、SOG 正确映射
+合成 AIS 船只
+source = SYNTHETIC_OCEAN
+合成 AIS 数据
+不得标记为 REAL_LIVE
+水深查询失败
+不得静默返回虚构真实水深
+Agent 3：State / GameLoop
+必须验证：
+Assertion
+预期
+Store 初始状态
+符合配置
+Credits 增加
+状态正确变化
+Credits 不足购买
+返回 false
+1× 时间倍率
+游戏时间与现实时间相等
+60× 时间倍率
+游戏时间为现实时间 60 倍
+存档恢复
+船舶、货物、资金恢复
+存档迁移
+旧版本能够转换
+Offline Settlement
+受最大离线时间限制
+Agent 4：WebGIS
+必须验证：
+Assertion
+预期
+MapLibre 初始化
+地图成功加载
+玩家船只位置更新
+Layer 更新
+AIS 数据为空
+不崩溃
+AIS 数据 10,000 条
+批量渲染
+航线更新
+Route Layer 更新
+地图销毁
+Deck Overlay 清理
+地图重建
+无重复事件监听
+Agent 5：HUD / Assets
+必须验证：
+Assertion
+预期
+程序化船只 SVG
+输出合法 SVG
+船首方向变化
+SVG 旋转角变化
+Manifest mode=image
+加载图片
+Manifest mode=procedural
+加载程序化图形
+图片 404
+fallback 生效
+未知 AssetKey
+显示错误或 fallback
+SeaWindow 波高变化
+波浪幅度变化
+Agent 6：Modals / Platform
+必须验证：
+Assertion
+预期
+交易 Modal
+可以打开、关闭
+资金不足
+显示错误
+船舶购买
+通过 Store Action
+Web Haptics
+安全降级
+Native Haptics
+调用 Capacitor
+通知取消
+正确取消
+Safe Area
+返回有效数值
+Web 平台
+不调用原生专属能力
+
+Step 3：模块集成与接口联调
+Gate 3
+集成顺序
+Agent 1 + Agent 3 Core → Store：验证单步航行模拟、燃油扣减、补给变化、位置变化。  
+Agent 2 + Agent 3 Services → Store：验证天气和 AIS 数据接入、缓存、断线恢复。  
+Agent 4 + Agent 3 Store → Map：验证玩家船只、AIS 船队、航线、燃油可达圈的动态渲染。  
+Agent 5 + Agent 3 Store → HUD：验证车钟、仪表、补给条、海况视窗状态同步。  
+Agent 6 + Agent 3 + Agent 1 Core → Store → Modal：验证购买、贸易、改装、求援的完整交易闭环。  
+跨模块集成断言
+import { describe, expect, it } from "vitest";
+
+describe("Game Integration", () => {
+  it("should advance ship position", () => {
+    // 输入固定船舶、天气、洋流与时间
+    // 执行一次 simulationTick
+    // 验证经纬度变化
+    // 验证 SOG / COG 更新
+  });
+
+  it("should consume fuel", () => {
+    // 车钟为 ECO
+    // 运行 1 游戏小时
+    // 验证燃油减少量符合 Core 公式
+  });
+
+  it("should prevent invalid cargo loading", () => {
+    // 装载后总载重超过 DWT
+    // 验证装载交易被拒绝
+  });
+
+  it("should settle trade atomically", () => {
+    // 验证 Credits 与 Cargo 同步变化
+    // 禁止只扣钱不增加货物
+  });
+
+  it("should recover after weather service failure", () => {
+    // 天气服务断开
+    // 验证缓存或 fallback 生效
+    // 游戏主循环不得停止
+  });
+});
+集成期间禁止事项
+Agent 直接修改其他 Agent 的文件解决冲突。  
+Agent 在 UI 中重写 Core 公式。  
+Agent 在 Store 中创建重复的全局配置。  
+Agent 直接访问原始 API。  
+Agent 将真实 AIS 数据混入合成 AIS 数据而不标识来源。  
+Agent 将大批 AIS 数据通过 React State 每帧刷新。  
+发现接口问题时，提交 Interface Change Request：
+ICR-ID: ICR-001
+Requester: Agent-4
+Affected Contract: src/types/index.ts
+Problem: AIS Layer requires target grouping metadata.
+Proposed Change: Add optional grouping field.
+Impact: Agent-2, Agent-4
+Approval: Architecture Owner
+
+Step 4：端到端验收与原生打包
+Gate 4
+4.1 浏览器验收场景
+E2E-001：启动游戏
+启动 Web → 初始化 Registry → 加载 Store → 初始化 MapLibre → 渲染 HUD → 显示玩家船只。
+
+E2E-002：航行操作
+调整车钟 → 游戏循环运行 → 船舶移动 → SOG/COG 更新 → 燃油与补给扣减 → 仪表刷新。
+
+E2E-003：港口贸易
+抵达港口 → 打开贸易大厅 → 买入货物 → 离港 → 抵达目的港 → 销售 → 结算 Credits。
+
+E2E-004：船舶升级
+积累资金与 XP → 打开船厂 → 购买船舶 → 更新活动船只 → 更新海图图标。
+
+E2E-005：真实数据断线
+断开天气/AIS → 使用缓存与模拟环境 → 恢复连接 → 更新实时数据，不破坏游戏状态。
+
+E2E-006：离线挂机
+退出应用 → 模拟离线时间 → 重启 → 计算离线时间差 → 结算航行、燃油、补给、损伤。
+4.2 性能验收指标
+指标
+Web 桌面目标
+移动端目标
+主界面稳定帧率
+60 FPS
+30 FPS 以上
+AIS 渲染目标
+10,000 条
+3,000 条
+Store 高频更新
+10~30 Hz
+5~15 Hz
+物理模拟频率
+1 Hz
+1 Hz
+单次 Core Tick
+< 5 ms
+< 10 ms
+首屏可交互时间
+< 5 s
+< 8 s
+UI 主线程长任务
+< 50 ms
+< 50 ms
+地图 Layer 内存增长
+不持续增长
+不持续增长
+这里的 AIS 渲染目标是性能验收基准，并非所有移动设备均保证同时显示 10,000 条目标。应通过分级采样、GPU 图层和视口过滤实现。
+4.3 Capacitor 打包验收
+npm run build
+
+npx cap sync
+
+npx cap open ios
+
+npx cap open android
+需在原生 IDE 中完成：
+iOS 安全区适配。  
+Android 状态栏和导航栏适配。  
+Haptics 权限及行为验证。  
+Local Notifications 权限申请。  
+应用后台生命周期处理。  
+网络断开与重连测试。  
+横屏/竖屏适配。  
+Capacitor Desktop 并不是 Capacitor Core 直接提供的标准桌面目标。桌面端需要明确选择 Electron、Tauri 或 Web PWA；建议第一阶段采用 PWA，后续如需独立桌面应用再引入 Tauri。
+
+最终架构决策（ADR）
+ADR-001：数据契约冻结
+src/types/index.ts 由架构负责人维护，Agent 只读。
+ADR-002：Core 必须纯函数
+物理、油耗、补给、贸易、路线、离线结算均由纯函数实现。
+ADR-003：Store 作为游戏动态状态唯一真相源
+所有业务状态由 Zustand Slice 管理，UI 仅使用 Selector。
+ADR-004：AssetRegistry 作为美术资源唯一入口
+所有业务组件通过 GameAsset 获取资源，禁止直接引用原始路径。
+ADR-005：Agent 文件所有权不可重叠
+每个文件仅有一个 Owner，跨模块修改必须通过 ICR。
+ADR-006：真实数据与模拟数据严格分离
+AIS、天气、水深数据必须携带来源和质量标记。
+ADR-007：离线挂机必须可重复结算
+离线结算以存档时间戳为输入，受最大离线时间、燃油、补给、船体耐久等约束。
+ADR-008：高频地图数据不进入持久化存档
+真实 AIS 船舶位置、Deck.gl Layer 状态、临时天气缓存不写入永久存档。
+
+推荐开发启动顺序
+架构负责人冻结 src/types/index.ts、package.json、Vite 配置和测试框架。  
+Agent 1、2、3、5、6 可以基于契约并行开发。  
+Agent 4 使用 Mock AIS 和 Mock Store Selector 提前开发地图。  
+各 Agent 先提交单元测试通过的模块。  
+按 Step 3 顺序逐模块集成。  
+最后执行浏览器 E2E、Capacitor iOS/Android 验收。  
+最关键的工程约束：不要让 6 个 Agent 同时开发一个“完整游戏”。要让它们分别开发 6 个接口明确、文件所有权独立、可独立测试的系统。
+这套规范可以作为 Codex、Claude Code、Antigravity 或其他多 Agent 编程工具的项目级开发基线。
