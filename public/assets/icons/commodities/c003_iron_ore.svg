@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bgGlow_comm_c003" cx="50%" cy="42%" r="60%">
+      <stop offset="0%" stop-color="#172554" stop-opacity="1"/>
+      <stop offset="55%" stop-color="#0A1128" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#050914" stop-opacity="1"/>
+    </radialGradient>
+    <linearGradient id="bezel_comm_c003" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#35C6D8" stop-opacity="0.85"/>
+      <stop offset="50%" stop-color="#334155" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0.85"/>
+    </linearGradient>
+    <linearGradient id="cyanGrad_comm_c003" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#67E8F9"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+    <linearGradient id="amberGrad_comm_c003" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+    <linearGradient id="steelGrad_comm_c003" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#94A3B8"/>
+      <stop offset="50%" stop-color="#475569"/>
+      <stop offset="100%" stop-color="#1E293B"/>
+    </linearGradient>
+  </defs>
+
+  <!-- App Icon 圓角鈦金属底座 -->
+  <rect x="16" y="16" width="480" height="480" rx="88" fill="url(#bgGlow_comm_c003)" stroke="url(#bezel_comm_c003)" stroke-width="8"/>
+  <rect x="34" y="34" width="444" height="444" rx="72" fill="none" stroke="#1E293B" stroke-width="3"/>
+
+  <!-- 等轴测海图战术网格底纹 -->
+  <g stroke="#35C6D8" stroke-opacity="0.10" stroke-width="1.5" fill="none">
+    <path d="M96 360 L256 436 L416 360 L256 284 Z"/>
+    <path d="M136 340 L296 416 M176 320 L336 396 M216 300 L376 376"/>
+    <path d="M376 340 L216 416 M336 320 L176 396 M296 300 L136 376"/>
+    <circle cx="256" cy="256" r="168" stroke-dasharray="6 8"/>
+  </g>
+
+  <!-- 四角海事铆钉装饰 -->
+  <circle cx="68" cy="68" r="5" fill="#35C6D8" fill-opacity="0.55"/>
+  <circle cx="444" cy="68" r="5" fill="#35C6D8" fill-opacity="0.55"/>
+  <circle cx="68" cy="444" r="5" fill="#F59E0B" fill-opacity="0.55"/>
+  <circle cx="444" cy="444" r="5" fill="#F59E0B" fill-opacity="0.55"/>
+
+  <!-- 核心主体等轴测 3D 图形 -->
+  
+      <g>
+        <polygon points="126,336 196,210 278,190 388,312 316,396 168,392" fill="#7C2D12" stroke="#F97316" stroke-width="4"/>
+        <polygon points="196,210 278,190 296,288 214,316" fill="#9A3412" stroke="#FDBA74" stroke-width="3"/>
+        <polygon points="278,190 388,312 316,396 296,288" fill="#431407" stroke="#F59E0B" stroke-width="3"/>
+        <polygon points="126,336 214,316 316,396 168,392" fill="#B45309" stroke="#FDE68A" stroke-width="3"/>
+        <!-- 矿物扫描线 -->
+        <polyline points="156,306 238,256 336,296" fill="none" stroke="#35C6D8" stroke-width="3" stroke-dasharray="6 4"/>
+        <circle cx="238" cy="256" r="7" fill="#67E8F9"/>
+      </g>
+</svg>

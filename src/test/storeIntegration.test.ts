@@ -91,4 +91,53 @@ describe("Zustand Store Integration & Dynamic Selectors", () => {
     expect(tickRes.distanceAdvancedNM).toBeGreaterThan(0.4);
     expect(tickRes.nextVesselState.position.latitude).not.toBe(v001.position.latitude);
   });
+
+  it("gates timeScale by Maritime License and settles Automated Fleet Liner Dispatch revenue", () => {
+    useGameStore.setState({
+      licenseId: "CLASS_4",
+      playerCredits: 2000000 as any,
+      playerLevel: 16,
+      ownedVesselIds: ["V001", "V002"],
+      fleetDispatches: [],
+      fleetLedgerLogs: [],
+    });
+
+    // CLASS_4 最高允许 60x，尝试设置 300x 会被钳制在 60x
+    useGameStore.getState().setTimeScale(300);
+    expect(useGameStore.getState().gameClock.timeScale).toBe(60);
+
+    // 考取 CLASS_3 (沿海二副, 10,000 CR) 解锁 120x
+    const unlockedC3 = useGameStore.getState().unlockLicense("CLASS_3");
+    expect(unlockedC3.ok).toBe(true);
+    useGameStore.getState().setTimeScale(120);
+    expect(useGameStore.getState().gameClock.timeScale).toBe(120);
+
+    // 考取 FLEET_OPS (航运运营总监, 1,000,000 CR) 解锁 600x 与班轮调度
+    const unlockedFleetOps = useGameStore.getState().unlockLicense("FLEET_OPS");
+    expect(unlockedFleetOps.ok).toBe(true);
+    useGameStore.getState().setTimeScale(600);
+    expect(useGameStore.getState().gameClock.timeScale).toBe(600);
+
+    // 派遣闲置船只 V002 跑自动化班轮
+    useGameStore.getState().assignFleetDispatch({
+      vesselId: "V002",
+      captainId: "CAP_01",
+      captainName: "林远航 (Capt. Lin)",
+      captainTrait: "节能专家 (-15% 燃油消耗，班轮净利 +12%)",
+      originPortId: "PORT_SHANGHAI",
+      destinationPortId: "PORT_YOKOHAMA",
+      commodityId: "CMD_MICROCHIPS",
+      estimatedProfitPerTrip: 48000,
+    });
+    expect(useGameStore.getState().fleetDispatches.length).toBe(1);
+
+    const creditsBefore = Number(useGameStore.getState().playerCredits);
+    // 推进 200 秒使班轮完成一次往返结算
+    useGameStore.getState().tickFleetDispatches(200);
+
+    const creditsAfter = Number(useGameStore.getState().playerCredits);
+    expect(creditsAfter).toBeGreaterThan(creditsBefore);
+    expect(useGameStore.getState().fleetLedgerLogs.length).toBeGreaterThan(0);
+  });
 });
+

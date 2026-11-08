@@ -4,11 +4,13 @@ import { useGameStore } from "../../store";
 import { PORTS } from "../../config/ports";
 import { checkWebGLSupport } from "./webglDetector";
 import { CanvasFallbackMap } from "./CanvasFallbackMap";
-import { Locate, Plus, Minus, Wind, CircleDot } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 import { buildRangeRingsGeoJSON } from "./RangeRingLayer";
 import { WindParticleLayer } from "./WindParticleLayer";
 import { selectMaxRangeNM } from "../../store/selectors/shipSelectors";
 import { useTranslation } from "../../i18n";
+import { GameAsset } from "../common/GameAsset";
+import { assetRegistry } from "../../assets/AssetRegistry";
 
 export const ECDISMap: React.FC = () => {
   const [webglStatus, setWebglStatus] = useState(() => checkWebGLSupport());
@@ -456,16 +458,13 @@ const WebGLMapContent: React.FC<{ onWebGLError: () => void }> = ({ onWebGLError 
     const [lon, lat] = [activeVessel.position.longitude, activeVessel.position.latitude];
 
     if (!playerMarkerRef.current || !playerMarkerRef.current.getElement().isConnected) {
+      const shipIconSrc = assetRegistry.resolveIconPath("hud_ship_marker", "@2x");
       const el = document.createElement("div");
       el.className = "player-ship-marker pointer-events-none flex flex-col items-center";
       el.style.zIndex = "40";
       el.innerHTML = `
-        <div class="player-ship-hull flex items-center justify-center" style="width:44px;height:44px;transform:rotate(${activeVessel.headingDeg}deg)">
-          <svg width="44" height="44" viewBox="0 0 44 44" style="filter:drop-shadow(0 0 8px #56D9E8)">
-            <line x1="22" y1="22" x2="22" y2="2" stroke="#56D9E8" stroke-width="2.5" stroke-dasharray="3,2" />
-            <polygon points="22,6 31,35 22,29 13,35" fill="#35C6D8" stroke="#FFFFFF" stroke-width="2" />
-            <circle cx="22" cy="22" r="3.5" fill="#FFFFFF" />
-          </svg>
+        <div class="player-ship-hull flex items-center justify-center" style="width:42px;height:42px;transform:rotate(${activeVessel.headingDeg}deg)">
+          <img src="${shipIconSrc}" alt="Own Ship" referrerpolicy="no-referrer" style="width:40px;height:40px;border-radius:9999px;filter:drop-shadow(0 0 8px #56D9E8);object-fit:contain;" />
         </div>
         <div class="text-[9px] font-mono font-bold text-cyan-200 bg-slate-950/90 px-1.5 py-0.5 rounded border border-cyan-400/70 -mt-1 shadow-lg whitespace-nowrap">
           🚢 ${activeVessel.sogKn.toFixed(1)} kn
@@ -517,14 +516,13 @@ const WebGLMapContent: React.FC<{ onWebGLError: () => void }> = ({ onWebGLError 
     aisMarkersRef.current.forEach((m) => m.remove());
     aisMarkersRef.current = [];
 
+    const aisIconSrc = assetRegistry.resolveIconPath("hud_ais_marker", "@2x");
     aisTargets.forEach((target) => {
       const el = document.createElement("div");
       el.className = "ais-target-marker cursor-pointer flex flex-col items-center";
       el.innerHTML = `
         <div class="w-6 h-6 flex items-center justify-center" style="transform: rotate(${target.cogDeg}deg)">
-          <svg viewBox="0 0 24 24" class="w-full h-full text-bridge-warning">
-            <polygon points="12,2 18,20 12,16 6,20" fill="rgba(245,185,66,0.85)" stroke="#FFFFFF" stroke-width="1.2" />
-          </svg>
+          <img src="${aisIconSrc}" alt="${target.vesselName}" referrerpolicy="no-referrer" style="width:24px;height:24px;border-radius:9999px;object-fit:contain;" />
         </div>
         <div class="text-[9px] font-mono text-bridge-warning bg-bridge-panel/90 px-1 py-0.2 rounded border border-bridge-border mt-0.5">
           ${target.vesselName.substring(0, 10)}
@@ -563,65 +561,127 @@ const WebGLMapContent: React.FC<{ onWebGLError: () => void }> = ({ onWebGLError 
         enabled={showWindParticles}
       />
 
-      {/* 手机端右侧浮动触控工具条 (>= 40x40px 触控热区) */}
-      <div className="absolute right-3 top-20 flex flex-col space-y-1.5 z-20 pointer-events-auto">
+      {/* 右侧浮动无框高对比触控工具条 (去掉底色和线框，多重投影确保全海图清晰可见) */}
+      <div className="absolute right-2.5 top-16 flex flex-col items-center space-y-2 z-20 pointer-events-auto select-none">
         <button
+          type="button"
           onClick={handleRecenter}
-          className="w-10 h-10 rounded-xl bg-bridge-panel/90 backdrop-blur border border-bridge-border text-bridge-highlight flex items-center justify-center shadow-xl active:bg-bridge-accent active:text-bridge-bg"
+          className="w-11 h-11 flex flex-col items-center justify-center text-cyan-300 hover:text-white active:scale-90 transition-all cursor-pointer group"
           title="Recenter"
         >
-          <Locate size={16} />
+          <GameAsset
+            assetKey="hud_compass"
+            width={26}
+            height={26}
+            className="w-6 h-6 object-contain [filter:drop-shadow(0_2px_4px_rgba(0,0,0,0.98))_drop-shadow(0_0_10px_rgba(0,0,0,0.9))] group-hover:scale-110 transition-transform"
+          />
+          <span className="text-[9px] font-mono font-extrabold text-cyan-200 leading-none mt-0.5 [text-shadow:0_1px_3px_#000,0_0_8px_#000]">
+            LOC
+          </span>
         </button>
+
         <button
+          type="button"
           onClick={() => mapRef.current?.zoomIn()}
-          className="w-10 h-10 rounded-xl bg-bridge-panel/90 backdrop-blur border border-bridge-border text-white flex items-center justify-center shadow-xl active:bg-bridge-accent active:text-bridge-bg font-bold"
+          className="w-11 h-10 flex flex-col items-center justify-center text-white hover:text-cyan-300 active:scale-90 transition-all cursor-pointer group"
+          title="Zoom In"
         >
-          <Plus size={16} />
+          <Plus
+            size={22}
+            strokeWidth={3}
+            className="[filter:drop-shadow(0_2px_4px_rgba(0,0,0,0.98))_drop-shadow(0_0_10px_rgba(0,0,0,0.95))] group-hover:scale-110 transition-transform"
+          />
+          <span className="text-[9px] font-mono font-bold text-slate-200 leading-none [text-shadow:0_1px_3px_#000,0_0_8px_#000]">
+            ZOOM+
+          </span>
         </button>
+
         <button
+          type="button"
           onClick={() => mapRef.current?.zoomOut()}
-          className="w-10 h-10 rounded-xl bg-bridge-panel/90 backdrop-blur border border-bridge-border text-white flex items-center justify-center shadow-xl active:bg-bridge-accent active:text-bridge-bg font-bold"
+          className="w-11 h-10 flex flex-col items-center justify-center text-white hover:text-cyan-300 active:scale-90 transition-all cursor-pointer group"
+          title="Zoom Out"
         >
-          <Minus size={16} />
+          <Minus
+            size={22}
+            strokeWidth={3}
+            className="[filter:drop-shadow(0_2px_4px_rgba(0,0,0,0.98))_drop-shadow(0_0_10px_rgba(0,0,0,0.95))] group-hover:scale-110 transition-transform"
+          />
+          <span className="text-[9px] font-mono font-bold text-slate-200 leading-none [text-shadow:0_1px_3px_#000,0_0_8px_#000]">
+            ZOOM-
+          </span>
         </button>
+
         <button
+          type="button"
           onClick={() => setShowWindParticles((v) => !v)}
-          className={`w-10 h-10 rounded-xl backdrop-blur border flex items-center justify-center shadow-xl transition-all ${
-            showWindParticles
-              ? "bg-sky-500/25 border-sky-400 text-sky-300"
-              : "bg-bridge-panel/90 border-bridge-border text-bridge-textMuted"
+          className={`w-11 h-11 flex flex-col items-center justify-center active:scale-90 transition-all cursor-pointer group ${
+            showWindParticles ? "opacity-100" : "opacity-55 hover:opacity-90"
           }`}
           title={t.hud.windLayer}
         >
-          <Wind size={16} />
+          <GameAsset
+            assetKey="hud_waves"
+            width={26}
+            height={26}
+            className={`w-6 h-6 object-contain group-hover:scale-110 transition-transform ${
+              showWindParticles
+                ? "[filter:drop-shadow(0_2px_4px_rgba(0,0,0,0.98))_drop-shadow(0_0_10px_rgba(56,189,248,0.85))]"
+                : "[filter:drop-shadow(0_2px_4px_rgba(0,0,0,0.98))_drop-shadow(0_0_8px_rgba(0,0,0,0.9))]"
+            }`}
+          />
+          <span
+            className={`text-[9px] font-mono font-extrabold leading-none mt-0.5 [text-shadow:0_1px_3px_#000,0_0_8px_#000] ${
+              showWindParticles ? "text-sky-300" : "text-slate-400"
+            }`}
+          >
+            WIND
+          </span>
         </button>
+
         <button
+          type="button"
           onClick={() => setShowRangeRing((v) => !v)}
-          className={`w-10 h-10 rounded-xl backdrop-blur border flex items-center justify-center shadow-xl transition-all ${
-            showRangeRing
-              ? "bg-emerald-500/25 border-emerald-400 text-emerald-300"
-              : "bg-bridge-panel/90 border-bridge-border text-bridge-textMuted"
+          className={`w-11 h-11 flex flex-col items-center justify-center active:scale-90 transition-all cursor-pointer group ${
+            showRangeRing ? "opacity-100" : "opacity-55 hover:opacity-90"
           }`}
           title={t.hud.rangeRing}
         >
-          <CircleDot size={16} />
+          <GameAsset
+            assetKey="hud_ais_radar"
+            width={26}
+            height={26}
+            className={`w-6 h-6 object-contain group-hover:scale-110 transition-transform ${
+              showRangeRing
+                ? "[filter:drop-shadow(0_2px_4px_rgba(0,0,0,0.98))_drop-shadow(0_0_10px_rgba(52,211,153,0.85))]"
+                : "[filter:drop-shadow(0_2px_4px_rgba(0,0,0,0.98))_drop-shadow(0_0_8px_rgba(0,0,0,0.9))]"
+            }`}
+          />
+          <span
+            className={`text-[9px] font-mono font-extrabold leading-none mt-0.5 [text-shadow:0_1px_3px_#000,0_0_8px_#000] ${
+              showRangeRing ? "text-emerald-300" : "text-slate-400"
+            }`}
+          >
+            RNG
+          </span>
         </button>
       </div>
 
-      {/* 经纬度位置与最大续航圈指示 (支持4位小数高精度GPS跳字与km/h实时换算) */}
-      <div className="absolute top-3 left-2.5 pointer-events-none bg-bridge-panel/85 backdrop-blur border border-bridge-border px-2.5 py-1 rounded-full text-[9px] sm:text-[10px] font-mono flex items-center space-x-1 sm:space-x-1.5 text-bridge-text z-20 max-w-[56vw] sm:max-w-none truncate">
-        <span className="w-1.5 h-1.5 rounded-full bg-bridge-safe animate-pulse shrink-0"></span>
-        <span className="text-bridge-highlight font-bold hidden sm:inline">WGS84</span>
-        <span className="text-bridge-textMuted truncate">
+      {/* 左上角无边框高精度经纬度与续航遥测文字 (支持4位小数高精度GPS跳字与km/h实时换算) */}
+      <div className="absolute top-2 left-2.5 pointer-events-none text-[10px] sm:text-[11px] font-mono tabular-nums flex items-center space-x-1 sm:space-x-1.5 text-slate-100 z-20 max-w-[46vw] sm:max-w-none truncate [text-shadow:0_1px_4px_rgba(0,0,0,0.98),0_0_10px_rgba(0,0,0,0.9)]">
+        <span className="text-cyan-300 font-extrabold hidden md:inline">WGS84</span>
+        <span className="text-slate-200 font-semibold truncate sm:hidden">
+          {activeVessel.position.latitude.toFixed(2)}°N, {activeVessel.position.longitude.toFixed(2)}°E
+        </span>
+        <span className="text-slate-200 font-semibold truncate hidden sm:inline">
           {activeVessel.position.latitude.toFixed(4)}°N, {activeVessel.position.longitude.toFixed(4)}°E
         </span>
-        <span className="text-bridge-border hidden xs:inline">·</span>
-        <span className="text-sky-300 font-bold shrink-0 hidden sm:inline">
+        <span className="text-slate-400 hidden md:inline">·</span>
+        <span className="text-sky-300 font-bold shrink-0 hidden md:inline">
           {(activeVessel.sogKn * 1.852).toFixed(1)} km/h
         </span>
-        <span className="text-bridge-border hidden xs:inline">·</span>
-        <span className="text-bridge-safe font-bold shrink-0 hidden xs:inline">
-          <span className="hidden sm:inline">{t.hud.rangeNM}: </span>
+        <span className="text-slate-400 hidden sm:inline">·</span>
+        <span className="text-emerald-300 font-bold shrink-0 hidden sm:inline">
           {maxRangeNM} NM
         </span>
       </div>

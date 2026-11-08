@@ -18,6 +18,13 @@ export type PersistedGameSlice = Pick<
   | "collectedAISIds"
   | "activeContractIds"
   | "completedContractIds"
+  | "licenseId"
+  | "weatherRoutingActive"
+  | "canalVipPassActive"
+  | "canalVipOwned"
+  | "commandCenterBuilt"
+  | "fleetDispatches"
+  | "fleetLedgerLogs"
   | "plannedRoute"
   | "autopilotEnabled"
   | "activeWaypointIndex"
@@ -42,6 +49,13 @@ export const gamePersistConfig: PersistOptions<GameStore, PersistedGameSlice> = 
     collectedAISIds: state.collectedAISIds,
     activeContractIds: state.activeContractIds,
     completedContractIds: state.completedContractIds,
+    licenseId: state.licenseId,
+    weatherRoutingActive: state.weatherRoutingActive,
+    canalVipPassActive: state.canalVipPassActive,
+    canalVipOwned: state.canalVipOwned,
+    commandCenterBuilt: state.commandCenterBuilt,
+    fleetDispatches: state.fleetDispatches,
+    fleetLedgerLogs: state.fleetLedgerLogs,
     plannedRoute: state.plannedRoute,
     autopilotEnabled: state.autopilotEnabled,
     activeWaypointIndex: state.activeWaypointIndex,

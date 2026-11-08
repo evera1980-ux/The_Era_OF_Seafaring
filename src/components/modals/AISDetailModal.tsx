@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useGameStore } from "../../store";
-import { X, Radio, Camera, Check } from "lucide-react";
+import { X, Check } from "lucide-react";
 import { useTranslation } from "../../i18n";
 import { calculateDistanceNM } from "../../core/physics/navigation";
+import { GameAsset } from "../common/GameAsset";
 
 export const AISDetailModal: React.FC = () => {
   const activeModal = useGameStore((state) => state.activeModal);
@@ -60,7 +61,12 @@ export const AISDetailModal: React.FC = () => {
       <div className="bg-bridge-panel border-t md:border border-bridge-border rounded-t-2xl md:rounded-2xl w-full max-w-2xl max-h-[90dvh] flex flex-col shadow-2xl overflow-hidden pb-safe animate-in slide-in-from-bottom duration-200">
         <div className="px-4 py-3 md:px-6 md:py-4 bg-bridge-panelLight/60 border-b border-bridge-border flex items-center justify-between shrink-0">
           <div className="flex items-center space-x-2.5 text-amber-400">
-            <Radio size={18} />
+            <GameAsset
+              assetKey="hud_ais_radar"
+              width={24}
+              height={24}
+              className="w-6 h-6 rounded-md object-contain"
+            />
             <div>
               <div className="text-sm md:text-base font-bold text-white">
                 {t.ais.title}
@@ -104,6 +110,12 @@ export const AISDetailModal: React.FC = () => {
                       }`}
                     >
                       <div className="text-[10px] font-bold flex items-center space-x-1">
+                        <GameAsset
+                          assetKey="hud_ais_marker"
+                          width={14}
+                          height={14}
+                          className="w-3.5 h-3.5 rounded-sm object-contain"
+                        />
                         <span>{item.vesselName.substring(0, 12)}</span>
                         {spotted && <span className="text-bridge-safe">✓</span>}
                       </div>
@@ -119,8 +131,22 @@ export const AISDetailModal: React.FC = () => {
             <div className="space-y-4">
               <div className="bg-bridge-panelLight/40 p-3.5 rounded-xl border border-bridge-border space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className="text-sm md:text-base font-bold text-white">
-                    {target.vesselName}
+                  <div className="text-sm md:text-base font-bold text-white flex items-center space-x-2">
+                    <GameAsset
+                      assetKey={
+                        target.vesselType === "Tanker"
+                          ? "V008"
+                          : target.vesselType === "Sailboat"
+                          ? "V003"
+                          : target.vesselType === "BulkCarrier"
+                          ? "V009"
+                          : "V007"
+                      }
+                      width={32}
+                      height={32}
+                      className="w-8 h-8 rounded-lg border border-bridge-border object-contain bg-[#0A1128]"
+                    />
+                    <span>{target.vesselName}</span>
                   </div>
                   <div className="text-[10px] px-2 py-0.5 rounded bg-bridge-bg text-bridge-highlight border border-bridge-border">
                     {target.vesselType}
@@ -176,7 +202,12 @@ export const AISDetailModal: React.FC = () => {
                   onClick={handleVHFContact}
                   className="w-full py-3 rounded-xl bg-bridge-accent text-bridge-bg font-bold text-xs hover:bg-bridge-highlight transition-all flex items-center justify-center space-x-2"
                 >
-                  <Radio size={14} />
+                  <GameAsset
+                    assetKey="hud_ais_radar"
+                    width={16}
+                    height={16}
+                    className="w-4 h-4 rounded-sm object-contain"
+                  />
                   <span>{t.ais.vhfCall}</span>
                 </button>
 
@@ -189,7 +220,16 @@ export const AISDetailModal: React.FC = () => {
                       : "bg-amber-400 text-bridge-bg hover:bg-amber-300"
                   }`}
                 >
-                  {isSpotted ? <Check size={14} /> : <Camera size={14} />}
+                  {isSpotted ? (
+                    <Check size={14} />
+                  ) : (
+                    <GameAsset
+                      assetKey="hud_xp_badge"
+                      width={16}
+                      height={16}
+                      className="w-4 h-4 rounded-sm object-contain"
+                    />
+                  )}
                   <span>
                     {isSpotted ? t.ais.spotted : `${t.ais.spotShipBtn} (+150 SXP)`}
                   </span>

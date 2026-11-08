@@ -1,0 +1,14 @@
+{
+  "appId": "com.seafaring.liveocean",
+  "appName": "The Era of Seafaring",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#050B16",
+    "preferredContentMode": "mobile"
+  },
+  "server": {
+    "iosScheme": "capacitor"
+  }
+}

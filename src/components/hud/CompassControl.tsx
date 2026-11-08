@@ -1,8 +1,8 @@
 import React from "react";
 import { useGameStore } from "../../store";
-import { Compass } from "lucide-react";
 import { useTranslation } from "../../i18n";
 import { calculateApparentWindAngle } from "../../core/physics/sail";
+import { GameAsset } from "../common/GameAsset";
 
 export const CompassControl: React.FC = () => {
   const heading = useGameStore((state) => state.activeVessel.headingDeg);
@@ -21,7 +21,12 @@ export const CompassControl: React.FC = () => {
   return (
     <div className="bg-bridge-panel/90 backdrop-blur border border-bridge-border rounded-xl p-3 shadow-2xl flex flex-col items-center select-none w-36">
       <div className="flex items-center space-x-1 text-[10px] font-mono text-bridge-accent font-bold mb-1">
-        <Compass size={13} />
+        <GameAsset
+          assetKey="hud_compass"
+          width={15}
+          height={15}
+          className="w-3.5 h-3.5 rounded-sm object-contain"
+        />
         <span>{t.hud.compass}</span>
       </div>
 

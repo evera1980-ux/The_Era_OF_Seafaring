@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useGameStore } from "../../store";
 import { PORTS } from "../../config/ports";
-import { Wind, CircleDot, Locate, Plus, Minus } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 import { useTranslation } from "../../i18n";
 import { selectMaxRangeNM } from "../../store/selectors/shipSelectors";
 import { WindParticleLayer } from "./WindParticleLayer";
+import { GameAsset } from "../common/GameAsset";
 
 const tileImageCache = new Map<string, HTMLImageElement>();
 
@@ -495,67 +496,133 @@ export const CanvasFallbackMap: React.FC<{ onShowHelp?: () => void }> = () => {
         enabled={showWindParticles}
       />
 
-      {/* 左上角经纬度与最大续航圈指示 (与 WebGL 模式保持一致，移除 WebGL 加速指南) */}
-      <div className="absolute top-3 left-2.5 pointer-events-none bg-bridge-panel/85 backdrop-blur border border-bridge-border px-2 py-1 rounded-full text-[9px] sm:text-[10px] font-mono flex items-center space-x-1 sm:space-x-1.5 text-bridge-text z-20 max-w-[42vw] sm:max-w-none truncate">
-        <span className="w-1.5 h-1.5 rounded-full bg-bridge-safe animate-pulse shrink-0"></span>
-        <span className="text-bridge-highlight font-bold hidden sm:inline">WGS84</span>
-        <span className="text-bridge-textMuted truncate">
+      {/* 左上角无边框高精度经纬度与续航遥测文字 */}
+      <div className="absolute top-2 left-2.5 pointer-events-none text-[10px] sm:text-[11px] font-mono tabular-nums flex items-center space-x-1 sm:space-x-1.5 text-slate-100 z-20 max-w-[46vw] sm:max-w-none truncate [text-shadow:0_1px_4px_rgba(0,0,0,0.98),0_0_10px_rgba(0,0,0,0.9)]">
+        <span className="text-cyan-300 font-extrabold hidden md:inline">WGS84</span>
+        <span className="text-slate-200 font-semibold truncate sm:hidden">
           {activeVessel.position.latitude.toFixed(2)}°N, {activeVessel.position.longitude.toFixed(2)}°E
         </span>
-        <span className="text-bridge-border hidden xs:inline">·</span>
-        <span className="text-bridge-safe font-bold shrink-0 hidden xs:inline">
-          <span className="hidden sm:inline">{t.hud.rangeNM}: </span>
+        <span className="text-slate-200 font-semibold truncate hidden sm:inline">
+          {activeVessel.position.latitude.toFixed(4)}°N, {activeVessel.position.longitude.toFixed(4)}°E
+        </span>
+        <span className="text-slate-400 hidden md:inline">·</span>
+        <span className="text-sky-300 font-bold shrink-0 hidden md:inline">
+          {(activeVessel.sogKn * 1.852).toFixed(1)} km/h
+        </span>
+        <span className="text-slate-400 hidden sm:inline">·</span>
+        <span className="text-emerald-300 font-bold shrink-0 hidden sm:inline">
           {maxRangeNM} NM
         </span>
       </div>
 
-      {/* 右侧触控工具按钮 (>= 40x40px) */}
-      <div className="absolute right-3 top-20 flex flex-col space-y-1.5 z-20">
+      {/* 右侧浮动无框高对比触控工具条 (去掉底色和线框，多重投影确保全海图清晰可见) */}
+      <div className="absolute right-2.5 top-16 flex flex-col items-center space-y-2 z-20 pointer-events-auto select-none">
         <button
+          type="button"
           onClick={() =>
             setCenter({
               lon: Number(activeVessel.position.longitude),
               lat: Number(activeVessel.position.latitude),
             })
           }
-          className="w-10 h-10 rounded-xl bg-bridge-panel/90 border border-bridge-border text-bridge-highlight font-bold flex items-center justify-center shadow-lg"
+          className="w-11 h-11 flex flex-col items-center justify-center text-cyan-300 hover:text-white active:scale-90 transition-all cursor-pointer group"
           title="Recenter"
         >
-          <Locate size={16} />
+          <GameAsset
+            assetKey="hud_compass"
+            width={26}
+            height={26}
+            className="w-6 h-6 object-contain [filter:drop-shadow(0_2px_4px_rgba(0,0,0,0.98))_drop-shadow(0_0_10px_rgba(0,0,0,0.9))] group-hover:scale-110 transition-transform"
+          />
+          <span className="text-[9px] font-mono font-extrabold text-cyan-200 leading-none mt-0.5 [text-shadow:0_1px_3px_#000,0_0_8px_#000]">
+            LOC
+          </span>
         </button>
+
         <button
+          type="button"
           onClick={() => setZoom((z) => Math.min(12, z + 1))}
-          className="w-10 h-10 rounded-xl bg-bridge-panel/90 border border-bridge-border text-white font-bold flex items-center justify-center shadow-lg"
+          className="w-11 h-10 flex flex-col items-center justify-center text-white hover:text-cyan-300 active:scale-90 transition-all cursor-pointer group"
+          title="Zoom In"
         >
-          <Plus size={16} />
+          <Plus
+            size={22}
+            strokeWidth={3}
+            className="[filter:drop-shadow(0_2px_4px_rgba(0,0,0,0.98))_drop-shadow(0_0_10px_rgba(0,0,0,0.95))] group-hover:scale-110 transition-transform"
+          />
+          <span className="text-[9px] font-mono font-bold text-slate-200 leading-none [text-shadow:0_1px_3px_#000,0_0_8px_#000]">
+            ZOOM+
+          </span>
         </button>
+
         <button
+          type="button"
           onClick={() => setZoom((z) => Math.max(3, z - 1))}
-          className="w-10 h-10 rounded-xl bg-bridge-panel/90 border border-bridge-border text-white font-bold flex items-center justify-center shadow-lg"
+          className="w-11 h-10 flex flex-col items-center justify-center text-white hover:text-cyan-300 active:scale-90 transition-all cursor-pointer group"
+          title="Zoom Out"
         >
-          <Minus size={16} />
+          <Minus
+            size={22}
+            strokeWidth={3}
+            className="[filter:drop-shadow(0_2px_4px_rgba(0,0,0,0.98))_drop-shadow(0_0_10px_rgba(0,0,0,0.95))] group-hover:scale-110 transition-transform"
+          />
+          <span className="text-[9px] font-mono font-bold text-slate-200 leading-none [text-shadow:0_1px_3px_#000,0_0_8px_#000]">
+            ZOOM-
+          </span>
         </button>
+
         <button
+          type="button"
           onClick={() => setShowWindParticles((v) => !v)}
-          className={`w-10 h-10 rounded-xl border flex items-center justify-center shadow-lg ${
-            showWindParticles
-              ? "bg-sky-500/25 border-sky-400 text-sky-300"
-              : "bg-bridge-panel/90 border-bridge-border text-bridge-textMuted"
+          className={`w-11 h-11 flex flex-col items-center justify-center active:scale-90 transition-all cursor-pointer group ${
+            showWindParticles ? "opacity-100" : "opacity-55 hover:opacity-90"
           }`}
           title={t.hud.windLayer}
         >
-          <Wind size={16} />
+          <GameAsset
+            assetKey="hud_waves"
+            width={26}
+            height={26}
+            className={`w-6 h-6 object-contain group-hover:scale-110 transition-transform ${
+              showWindParticles
+                ? "[filter:drop-shadow(0_2px_4px_rgba(0,0,0,0.98))_drop-shadow(0_0_10px_rgba(56,189,248,0.85))]"
+                : "[filter:drop-shadow(0_2px_4px_rgba(0,0,0,0.98))_drop-shadow(0_0_8px_rgba(0,0,0,0.9))]"
+            }`}
+          />
+          <span
+            className={`text-[9px] font-mono font-extrabold leading-none mt-0.5 [text-shadow:0_1px_3px_#000,0_0_8px_#000] ${
+              showWindParticles ? "text-sky-300" : "text-slate-400"
+            }`}
+          >
+            WIND
+          </span>
         </button>
+
         <button
+          type="button"
           onClick={() => setShowRangeRing((v) => !v)}
-          className={`w-10 h-10 rounded-xl border flex items-center justify-center shadow-lg ${
-            showRangeRing
-              ? "bg-emerald-500/25 border-emerald-400 text-emerald-300"
-              : "bg-bridge-panel/90 border-bridge-border text-bridge-textMuted"
+          className={`w-11 h-11 flex flex-col items-center justify-center active:scale-90 transition-all cursor-pointer group ${
+            showRangeRing ? "opacity-100" : "opacity-55 hover:opacity-90"
           }`}
           title={t.hud.rangeRing}
         >
-          <CircleDot size={16} />
+          <GameAsset
+            assetKey="hud_ais_radar"
+            width={26}
+            height={26}
+            className={`w-6 h-6 object-contain group-hover:scale-110 transition-transform ${
+              showRangeRing
+                ? "[filter:drop-shadow(0_2px_4px_rgba(0,0,0,0.98))_drop-shadow(0_0_10px_rgba(52,211,153,0.85))]"
+                : "[filter:drop-shadow(0_2px_4px_rgba(0,0,0,0.98))_drop-shadow(0_0_8px_rgba(0,0,0,0.9))]"
+            }`}
+          />
+          <span
+            className={`text-[9px] font-mono font-extrabold leading-none mt-0.5 [text-shadow:0_1px_3px_#000,0_0_8px_#000] ${
+              showRangeRing ? "text-emerald-300" : "text-slate-400"
+            }`}
+          >
+            RNG
+          </span>
         </button>
       </div>
     </div>

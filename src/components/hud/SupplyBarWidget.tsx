@@ -1,8 +1,8 @@
 import React from "react";
 import { useGameStore } from "../../store";
 import { VESSELS } from "../../config/vessels";
-import { Fuel, Droplets, Utensils, Wrench, Shield, Users, Package } from "lucide-react";
 import { useTranslation } from "../../i18n";
+import { GameAsset } from "../common/GameAsset";
 
 export const SupplyBarWidget: React.FC = () => {
   const activeVessel = useGameStore((state) => state.activeVessel);
@@ -30,7 +30,12 @@ export const SupplyBarWidget: React.FC = () => {
 
       <div className="grid grid-cols-2 gap-2 text-[10px]">
         <div className="flex items-center space-x-2 bg-bridge-panelLight/60 p-1.5 rounded border border-bridge-border">
-          <Shield size={12} className={hpPct > 50 ? "text-bridge-safe" : "text-bridge-danger"} />
+          <GameAsset
+            assetKey="hud_hull"
+            width={16}
+            height={16}
+            className="w-4 h-4 rounded-sm shrink-0 object-contain"
+          />
           <div className="flex-1">
             <div className="flex justify-between">
               <span className="text-bridge-textMuted">{t.hud.hull}</span>
@@ -46,7 +51,12 @@ export const SupplyBarWidget: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-2 bg-bridge-panelLight/60 p-1.5 rounded border border-bridge-border">
-          <Users size={12} className="text-bridge-highlight" />
+          <GameAsset
+            assetKey="hud_crew"
+            width={16}
+            height={16}
+            className="w-4 h-4 rounded-sm shrink-0 object-contain"
+          />
           <div className="flex-1">
             <div className="flex justify-between">
               <span className="text-bridge-textMuted">{t.hud.crew}</span>
@@ -65,7 +75,12 @@ export const SupplyBarWidget: React.FC = () => {
       <div className="space-y-1.5 text-[10px]">
         {/* 燃油 */}
         <div className="flex items-center space-x-2">
-          <Fuel size={12} className="text-amber-400 w-4 shrink-0" />
+          <GameAsset
+            assetKey="hud_fuel"
+            width={16}
+            height={16}
+            className="w-4 h-4 rounded-sm shrink-0 object-contain"
+          />
           <span className="w-14 text-bridge-textMuted">{t.hud.fuel}</span>
           <div className="flex-1 h-1.5 bg-bridge-bg rounded-full overflow-hidden border border-bridge-border/40">
             <div
@@ -80,7 +95,12 @@ export const SupplyBarWidget: React.FC = () => {
 
         {/* 淡水 */}
         <div className="flex items-center space-x-2">
-          <Droplets size={12} className="text-sky-400 w-4 shrink-0" />
+          <GameAsset
+            assetKey="hud_water"
+            width={16}
+            height={16}
+            className="w-4 h-4 rounded-sm shrink-0 object-contain"
+          />
           <span className="w-14 text-bridge-textMuted">{t.hud.water}</span>
           <div className="flex-1 h-1.5 bg-bridge-bg rounded-full overflow-hidden border border-bridge-border/40">
             <div
@@ -93,7 +113,12 @@ export const SupplyBarWidget: React.FC = () => {
 
         {/* 口粮 */}
         <div className="flex items-center space-x-2">
-          <Utensils size={12} className="text-emerald-400 w-4 shrink-0" />
+          <GameAsset
+            assetKey="hud_food"
+            width={16}
+            height={16}
+            className="w-4 h-4 rounded-sm shrink-0 object-contain"
+          />
           <span className="w-14 text-bridge-textMuted">{t.hud.ration}</span>
           <div className="flex-1 h-1.5 bg-bridge-bg rounded-full overflow-hidden border border-bridge-border/40">
             <div
@@ -106,7 +131,12 @@ export const SupplyBarWidget: React.FC = () => {
 
         {/* 维修备件 */}
         <div className="flex items-center space-x-2">
-          <Wrench size={12} className="text-purple-400 w-4 shrink-0" />
+          <GameAsset
+            assetKey="hud_parts"
+            width={16}
+            height={16}
+            className="w-4 h-4 rounded-sm shrink-0 object-contain"
+          />
           <span className="w-14 text-bridge-textMuted">{t.hud.parts}</span>
           <div className="flex-1 h-1.5 bg-bridge-bg rounded-full overflow-hidden border border-bridge-border/40">
             <div
@@ -120,7 +150,12 @@ export const SupplyBarWidget: React.FC = () => {
 
       <div className="pt-1 border-t border-bridge-border/60 flex items-center justify-between text-[10px] text-bridge-textMuted">
         <span className="flex items-center space-x-1">
-          <Package size={11} />
+          <GameAsset
+            assetKey="hud_cargo_box"
+            width={15}
+            height={15}
+            className="w-3.5 h-3.5 rounded-sm shrink-0 object-contain"
+          />
           <span>{t.hud.cargoPayload}</span>
         </span>
         <span className="text-bridge-text font-bold">

@@ -1,7 +1,7 @@
 import React from "react";
 import { useGameStore } from "../../store";
-import { ShoppingBag, Wrench, Radio, BookOpen, AlertTriangle, Navigation } from "lucide-react";
 import { useTranslation } from "../../i18n";
+import { GameAsset } from "../common/GameAsset";
 
 export const QuickActionDock: React.FC = () => {
   const openModal = useGameStore((state) => state.openModal);
@@ -11,83 +11,133 @@ export const QuickActionDock: React.FC = () => {
   const { t } = useTranslation();
 
   return (
-    <div className="bg-bridge-panel/90 backdrop-blur border border-bridge-border rounded-xl p-2 shadow-2xl flex items-center space-x-2 select-none font-mono">
+    <div className="flex items-center space-x-4 select-none font-mono">
       {/* 航线规划 */}
       <button
+        type="button"
         onClick={() => openModal("ROUTE_PLANNER")}
-        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs border transition-all ${
+        className={`flex flex-col items-center justify-center px-2 py-1 text-xs transition-all cursor-pointer ${
           activeModal === "ROUTE_PLANNER" || autopilotEnabled
-            ? "bg-bridge-highlight text-bridge-bg border-white font-bold shadow-[0_0_12px_#56D9E8]"
-            : "bg-bridge-accent/20 text-bridge-highlight border-bridge-accent/50 hover:bg-bridge-accent/30"
+            ? "text-cyan-300 font-extrabold scale-105"
+            : "text-slate-100 hover:text-cyan-300"
         }`}
       >
-        <Navigation size={14} className={autopilotEnabled ? "animate-spin" : ""} />
-        <span>{autopilotEnabled ? t.dock.autopilotEngaged : t.dock.routePlan}</span>
+        <GameAsset
+          assetKey="hud_route_nav"
+          width={39}
+          height={39}
+          className={`w-[39px] h-[39px] object-contain [filter:drop-shadow(0_3px_6px_rgba(0,0,0,0.95))] ${
+            autopilotEnabled ? "animate-spin" : ""
+          }`}
+        />
+        <span className="mt-1 [text-shadow:0_1px_4px_#000,0_0_8px_#000]">
+          {autopilotEnabled ? t.dock.autopilotEngaged : t.dock.routePlan}
+        </span>
       </button>
 
       {/* 港口贸易 */}
       <button
+        type="button"
         onClick={() => openModal("PORT_TRADE", { portId: "CNSHA" })}
-        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs border transition-all ${
+        className={`flex flex-col items-center justify-center px-2 py-1 text-xs transition-all cursor-pointer ${
           activeModal === "PORT_TRADE"
-            ? "bg-bridge-accent text-bridge-bg border-white font-bold"
-            : "bg-bridge-panelLight/70 text-bridge-text border-bridge-border hover:border-bridge-highlight"
+            ? "text-amber-300 font-extrabold scale-105"
+            : "text-slate-100 hover:text-amber-300"
         }`}
       >
-        <ShoppingBag size={14} />
-        <span>{t.dock.portTrade}</span>
+        <GameAsset
+          assetKey="hud_port_trade"
+          width={39}
+          height={39}
+          className="w-[39px] h-[39px] object-contain [filter:drop-shadow(0_3px_6px_rgba(0,0,0,0.95))]"
+        />
+        <span className="mt-1 [text-shadow:0_1px_4px_#000,0_0_8px_#000]">
+          {t.dock.portTrade}
+        </span>
       </button>
 
       {/* 船厂与改装 */}
       <button
+        type="button"
         onClick={() => openModal("SHIPYARD")}
-        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs border transition-all ${
+        className={`flex flex-col items-center justify-center px-2 py-1 text-xs transition-all cursor-pointer ${
           activeModal === "SHIPYARD"
-            ? "bg-bridge-accent text-bridge-bg border-white font-bold"
-            : "bg-bridge-panelLight/70 text-bridge-text border-bridge-border hover:border-bridge-highlight"
+            ? "text-sky-300 font-extrabold scale-105"
+            : "text-slate-100 hover:text-sky-300"
         }`}
       >
-        <Wrench size={14} />
-        <span>{t.dock.shipyard}</span>
+        <GameAsset
+          assetKey="hud_shipyard"
+          width={39}
+          height={39}
+          className="w-[39px] h-[39px] object-contain [filter:drop-shadow(0_3px_6px_rgba(0,0,0,0.95))]"
+        />
+        <span className="mt-1 [text-shadow:0_1px_4px_#000,0_0_8px_#000]">
+          {t.dock.shipyard}
+        </span>
       </button>
 
       {/* AIS 动态 */}
       <button
+        type="button"
         onClick={() => openModal("AIS_DETAIL")}
-        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs border transition-all ${
+        className={`flex flex-col items-center justify-center px-2 py-1 text-xs transition-all cursor-pointer ${
           activeModal === "AIS_DETAIL"
-            ? "bg-bridge-accent text-bridge-bg border-white font-bold"
-            : "bg-bridge-panelLight/70 text-bridge-text border-bridge-border hover:border-bridge-highlight"
+            ? "text-emerald-300 font-extrabold scale-105"
+            : "text-slate-100 hover:text-emerald-300"
         }`}
       >
-        <Radio size={14} />
-        <span>{t.dock.aisFleet}</span>
+        <GameAsset
+          assetKey="hud_ais_radar"
+          width={39}
+          height={39}
+          className="w-[39px] h-[39px] object-contain [filter:drop-shadow(0_3px_6px_rgba(0,0,0,0.95))]"
+        />
+        <span className="mt-1 [text-shadow:0_1px_4px_#000,0_0_8px_#000]">
+          {t.dock.aisFleet}
+        </span>
       </button>
 
       {/* 日志 */}
       <button
+        type="button"
         onClick={() => openModal("JOURNAL")}
-        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs border transition-all ${
+        className={`flex flex-col items-center justify-center px-2 py-1 text-xs transition-all cursor-pointer ${
           activeModal === "JOURNAL"
-            ? "bg-bridge-accent text-bridge-bg border-white font-bold"
-            : "bg-bridge-panelLight/70 text-bridge-text border-bridge-border hover:border-bridge-highlight"
+            ? "text-cyan-300 font-extrabold scale-105"
+            : "text-slate-100 hover:text-cyan-300"
         }`}
       >
-        <BookOpen size={14} />
-        <span>{t.dock.journal}</span>
+        <GameAsset
+          assetKey="hud_journal"
+          width={39}
+          height={39}
+          className="w-[39px] h-[39px] object-contain [filter:drop-shadow(0_3px_6px_rgba(0,0,0,0.95))]"
+        />
+        <span className="mt-1 [text-shadow:0_1px_4px_#000,0_0_8px_#000]">
+          {t.dock.journal}
+        </span>
       </button>
 
       {/* Mayday 求援 */}
       <button
+        type="button"
         onClick={() => openModal("MAYDAY")}
-        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs border transition-all ${
+        className={`flex flex-col items-center justify-center px-2 py-1 text-xs transition-all cursor-pointer ${
           isGrounded
-            ? "bg-bridge-danger text-white border-white animate-bounce font-bold shadow-[0_0_15px_#FF5A5F]"
-            : "bg-bridge-panelLight/70 text-bridge-danger border-bridge-danger/50 hover:bg-bridge-danger/20"
+            ? "text-rose-400 animate-bounce font-extrabold"
+            : "text-rose-400 hover:text-rose-300"
         }`}
       >
-        <AlertTriangle size={14} />
-        <span>{t.dock.mayday}</span>
+        <GameAsset
+          assetKey="hazard_mayday"
+          width={39}
+          height={39}
+          className="w-[39px] h-[39px] object-contain [filter:drop-shadow(0_3px_6px_rgba(0,0,0,0.95))]"
+        />
+        <span className="mt-1 [text-shadow:0_1px_4px_#000,0_0_8px_#000]">
+          {t.dock.mayday}
+        </span>
       </button>
     </div>
   );

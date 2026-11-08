@@ -408,12 +408,33 @@ export interface PlannedRoute {
   createdAt: UnixMs;
 }
 
+export type MaritimeLicenseId =
+  | "CLASS_4"
+  | "CLASS_3"
+  | "CLASS_2"
+  | "CLASS_1"
+  | "FLEET_OPS";
+
+export interface FleetDispatchOrder {
+  vesselId: string;
+  captainId: string;
+  captainName: string;
+  captainTrait: string;
+  originPortId: string;
+  destinationPortId: string;
+  commodityId: string;
+  progressPct: number;
+  estimatedProfitPerTrip: number;
+  tripsCompleted: number;
+  totalEarnedCr: number;
+}
+
 export interface GameClockState {
   gameTimeMs: number;
 
   realTimeMs: number;
 
-  timeScale: 1 | 2 | 5 | 10 | 30 | 60 | 300 | 1800 | 3600;
+  timeScale: 1 | 2 | 5 | 10 | 30 | 60 | 120 | 180 | 300 | 600 | 1800 | 3600;
 
   paused: boolean;
 }

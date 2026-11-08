@@ -11,17 +11,24 @@ export type ActiveModal =
   | "MAP_STYLE_SETTINGS";
 
 export type PortTradeTab = "COMMODITIES" | "SUPPLIES" | "REPAIR";
+export type JournalTab = "LICENSES" | "FLEET" | "CONTRACTS" | "LOGS" | "ATLAS";
 
 export interface UIModalSlice {
   activeModal: ActiveModal;
   selectedPortId: string | null;
   selectedAISTargetId: string | null;
   portTradeTab: PortTradeTab;
+  journalTab: JournalTab;
   mapTileSource: "NAUTICAL_DARK" | "GOOGLE_SATELLITE" | "OPENSTREETMAP";
 
   openModal: (
     modal: ActiveModal,
-    payload?: { portId?: string; aisId?: string; tab?: PortTradeTab }
+    payload?: {
+      portId?: string;
+      aisId?: string;
+      tab?: PortTradeTab;
+      journalTab?: JournalTab;
+    }
   ) => void;
   closeModal: () => void;
   setMapTileSource: (source: "NAUTICAL_DARK" | "GOOGLE_SATELLITE" | "OPENSTREETMAP") => void;
@@ -32,6 +39,7 @@ export const createUIModalSlice: StateCreator<UIModalSlice> = (set) => ({
   selectedPortId: null,
   selectedAISTargetId: null,
   portTradeTab: "COMMODITIES",
+  journalTab: "LICENSES",
   mapTileSource: "NAUTICAL_DARK",
 
   openModal: (modal, payload) =>
@@ -40,6 +48,7 @@ export const createUIModalSlice: StateCreator<UIModalSlice> = (set) => ({
       selectedPortId: payload?.portId ?? state.selectedPortId,
       selectedAISTargetId: payload?.aisId ?? null,
       portTradeTab: payload?.tab ?? "COMMODITIES",
+      journalTab: payload?.journalTab ?? state.journalTab,
     })),
 
   closeModal: () =>

@@ -1,6 +1,6 @@
 import React from "react";
 import { useGameStore } from "../../store";
-import { X, AlertTriangle, LifeBuoy, Radio, Anchor } from "lucide-react";
+import { X } from "lucide-react";
 import { PORTS } from "../../config/ports";
 import { SALVAGE_TUG_PRICES } from "../../config/economy";
 import { useTranslation } from "../../i18n";
@@ -8,6 +8,7 @@ import { portService } from "../../services/ports/portService";
 import { calculateRefloatProbability } from "../../core/physics/grounding";
 import { aggregateVesselBonuses } from "../../core/simulation/tick";
 import { makeKn } from "../../types";
+import { GameAsset } from "../common/GameAsset";
 
 export const MaydayModal: React.FC = () => {
   const activeModal = useGameStore((state) => state.activeModal);
@@ -112,7 +113,12 @@ export const MaydayModal: React.FC = () => {
       <div className="bg-bridge-panel border-t md:border-2 border-bridge-danger/80 rounded-t-2xl md:rounded-2xl w-full max-w-lg max-h-[92dvh] flex flex-col shadow-2xl overflow-hidden pb-safe animate-in slide-in-from-bottom duration-200">
         <div className="px-4 py-3 md:px-6 md:py-4 bg-bridge-danger/20 border-b border-bridge-danger/40 flex items-center justify-between shrink-0">
           <div className="flex items-center space-x-2.5 text-bridge-danger">
-            <AlertTriangle size={20} className="animate-pulse" />
+            <GameAsset
+              assetKey="hazard_mayday"
+              width={26}
+              height={26}
+              className="w-6 h-6 rounded-md object-contain animate-pulse"
+            />
             <div>
               <div className="text-sm md:text-base font-bold text-white">
                 {t.mayday.title}
@@ -135,7 +141,12 @@ export const MaydayModal: React.FC = () => {
           {/* 选项 A: 自主脱浅操作 */}
           <div className="bg-bridge-panelLight/40 p-3.5 rounded-xl border border-bridge-border space-y-2">
             <div className="text-xs font-bold text-amber-400 flex items-center space-x-1.5">
-              <Anchor size={14} />
+              <GameAsset
+                assetKey="hazard_shallow"
+                width={18}
+                height={18}
+                className="w-4 h-4 rounded-sm object-contain"
+              />
               <span>
                 {t.mayday.refloatTitle} ({refloatProbPct}%)
               </span>
@@ -154,7 +165,12 @@ export const MaydayModal: React.FC = () => {
           {/* 选项 B: 邻近商船人道接济 */}
           <div className="bg-bridge-panelLight/40 p-3.5 rounded-xl border border-bridge-border space-y-2">
             <div className="text-xs font-bold text-sky-400 flex items-center space-x-1.5">
-              <Radio size={14} />
+              <GameAsset
+                assetKey="hud_ais_radar"
+                width={18}
+                height={18}
+                className="w-4 h-4 rounded-sm object-contain"
+              />
               <span>{t.mayday.aisAidTitle}</span>
             </div>
             <div className="text-[11px] text-bridge-textMuted">
@@ -200,7 +216,12 @@ export const MaydayModal: React.FC = () => {
               onClick={handleCallSalvage}
               className="w-full mt-2 py-3 rounded-xl bg-bridge-danger text-white font-bold text-xs hover:bg-red-600 transition-all flex items-center justify-center space-x-2 shadow-lg shadow-red-500/20"
             >
-              <LifeBuoy size={16} />
+              <GameAsset
+                assetKey="PERK_EMERGENCY_CAPTAIN"
+                width={18}
+                height={18}
+                className="w-4 h-4 rounded-sm object-contain"
+              />
               <span>{t.mayday.sendSignalBtn}</span>
             </button>
           </div>

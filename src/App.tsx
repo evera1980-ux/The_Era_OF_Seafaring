@@ -38,6 +38,15 @@ export const App: React.FC = () => {
   const roWaterMakerEnabled = useGameStore((state) => state.roWaterMakerEnabled);
   const discoverPort = useGameStore((state) => state.discoverPort);
 
+  const licenseId = useGameStore((state) => state.licenseId);
+  const weatherRoutingActive = useGameStore((state) => state.weatherRoutingActive);
+  const canalVipPassActive = useGameStore((state) => state.canalVipPassActive);
+  const canalVipOwned = useGameStore((state) => state.canalVipOwned);
+  const setWeatherRouting = useGameStore((state) => state.setWeatherRouting);
+  const setCanalVipPass = useGameStore((state) => state.setCanalVipPass);
+  const setTimeScale = useGameStore((state) => state.setTimeScale);
+  const tickFleetDispatches = useGameStore((state) => state.tickFleetDispatches);
+
   const updateVesselState = useGameStore((state) => state.updateVesselState);
   const updateWeather = useGameStore((state) => state.updateWeather);
   const updateDepth = useGameStore((state) => state.updateDepth);
@@ -45,7 +54,7 @@ export const App: React.FC = () => {
   const addXP = useGameStore((state) => state.addXP);
   const addLog = useGameStore((state) => state.addLog);
 
-  const lastTickTimeRef = useRef<number>(Date.now());
+  const lastSafetyAirbagTimeRef = useRef<number>(0);
 
   // 定期刷新水深与气象、AIS
   useEffect(() => {
@@ -81,6 +90,9 @@ export const App: React.FC = () => {
     const timer = setInterval(() => {
       if (gameClock.paused) return;
 
+      // 推进公司自动化班轮船队 (每 250ms 步进 0.25s)
+      tickFleetDispatches(0.25);
+
       // 真实世界 1:1 物理时间步长：每 250ms (0.25秒) 推进 0.25 * timeScale 秒
       // 1× = 真实世界 1:1 实时航速 (1秒 = 1秒)；60× = 1秒1分；300× = 1秒5分；1800× = 1秒30分；3600× = 1秒1小时
       const chartNavDtSeconds = 0.25 * gameClock.timeScale;
@@ -114,7 +126,59 @@ export const App: React.FC = () => {
           Math.round(((effectiveHeadingDeg + Math.sign(diff) * turnStep + 360) % 360) * 10) / 10;
       }
 
-      // 2. 物理与水文推进 (传入本帧最新 effectiveHeadingDeg 与 effectiveTelegraph)
+      // 1.5 高倍速“安全气囊机制” (High-Speed Safety Airbag)
+      // 触发条件：(1) 水深低于吃水线 1.5 倍；(2) 柴油船燃油不足以抵达下一航路点；(3) 突发 9 级以上风暴
+      if (
+        gameClock.timeScale > 1 &&
+        effectiveTelegraph !== "STOP" &&
+        Date.now() - lastSafetyAirbagTimeRef.current > 10000
+      ) {
+        const isShallowDanger = currentDepth < activeVessel.currentDraftM * 1.5;
+        const isLowFuelDanger =
+          activeVessel.propulsionMode === "Diesel" &&
+          targetWp !== undefined &&
+          activeVessel.supplies.fuelT < Math.min(0.15, distanceToWpNM * 0.002);
+        const isSevereStorm =
+          currentWeather.beaufortScale >= 9 && !weatherRoutingActive;
+
+        if (isShallowDanger || isLowFuelDanger || isSevereStorm) {
+          lastSafetyAirbagTimeRef.current = Date.now();
+          setTimeScale(1);
+          platformAdapter.haptic("warning");
+          const reason = isShallowDanger
+            ? `浅水预警 (水深 ${currentDepth.toFixed(1)}m < 1.5倍吃水)`
+            : isLowFuelDanger
+            ? "燃油储备不足以支撑至下一航路点"
+            : `前方突发 ${currentWeather.beaufortScale} 级暴风`;
+          addLog(
+            `🛡️ [安全气囊触发] ${reason}！系统已瞬间强制切回 1×(真实) 航速并震动告警，请立即检查航况！`,
+            "ALERT"
+          );
+        } else if (
+          licenseId !== "CLASS_4" &&
+          gameClock.timeScale > 60 &&
+          targetWp &&
+          activeWaypointIndex === (plannedRoute?.waypoints.length ?? 1) - 1 &&
+          distanceToWpNM <= 20
+        ) {
+          // 二副 (Class 3) 及以上特权：接近目标港 20 海里自动减速至 60x
+          lastSafetyAirbagTimeRef.current = Date.now();
+          setTimeScale(60);
+          addLog(
+            `⚓ [近港引航提示] 距离目的港不足 20 海里 (${distanceToWpNM.toFixed(1)} NM)，已自动平缓降速至 60× 准备进港。`,
+            "INFO"
+          );
+        }
+      }
+
+      // 2. 物理与水文推进 (若已订购岸基气象导航路由，免疫恶劣海况大浪失速)
+      const effectiveWeather = weatherRoutingActive
+        ? {
+            ...currentWeather,
+            significantWaveHeightM: Math.min(1.5, currentWeather.significantWaveHeightM),
+          }
+        : currentWeather;
+
       const vesselForTick = {
         ...activeVessel,
         headingDeg: effectiveHeadingDeg,
@@ -123,7 +187,7 @@ export const App: React.FC = () => {
 
       const result = simulateTick({
         vesselState: vesselForTick,
-        weather: currentWeather,
+        weather: effectiveWeather,
         waterDepthM: currentDepth,
         dtSeconds: resourceDtSeconds,
         unlockedPerkIds,
@@ -141,11 +205,16 @@ export const App: React.FC = () => {
       let distanceMovedNM = result.distanceAdvancedNM;
       let arrivedFinalDestination = false;
 
+      // 岸基气象路由 (+25% 顺风顺流等效航速加成) 与 运河 VIP (+20% 优先通航加成)
+      const privilegeSpeedMult =
+        (weatherRoutingActive ? 1.25 : 1.0) *
+        (canalVipPassActive || canalVipOwned ? 1.2 : 1.0);
+
       if (!result.grounded && effectiveTelegraph !== "STOP") {
         if (targetWp && targetBearingDeg !== null) {
           // 自动舵航迹控制模式 (ECDIS Track Control): 保持船舶真实物理航速沿航道航行
           const cruiseSpeedKn = makeKn(
-            Math.round(Math.max(6.5, nextSogKn) * 10) / 10
+            Math.round(Math.max(6.5, nextSogKn) * privilegeSpeedMult * 10) / 10
           );
           nextSogKn = cruiseSpeedKn;
           nextCogDeg = Math.round(targetBearingDeg) % 360;
@@ -167,6 +236,8 @@ export const App: React.FC = () => {
               effectiveTelegraph = "STOP";
               nextSogKn = makeKn(0);
               setEngineTelegraph("STOP");
+              setWeatherRouting(false);
+              if (!canalVipOwned) setCanalVipPass(false);
               const nearestPort = portService.findNearestPort(targetWp.position);
               const arrivedPortId = nearestPort?.port.portId ?? "CNSHA";
               discoverPort(arrivedPortId);
@@ -187,10 +258,12 @@ export const App: React.FC = () => {
           }
         } else if (nextSogKn > 0.1) {
           // 手动操舵航行模式：按当前物理航速与真实时间倍率推进船位
+          const boostedSogKn = makeKn(Math.round(nextSogKn * privilegeSpeedMult * 10) / 10);
+          nextSogKn = boostedSogKn;
           const manualMove = advancePosition(
             activeVessel.position,
             nextCogDeg,
-            nextSogKn,
+            boostedSogKn,
             chartNavDtSeconds
           );
           nextPosition = manualMove.nextPos;
@@ -241,10 +314,15 @@ export const App: React.FC = () => {
     unlockedPerkIds,
     roWaterMakerEnabled,
     discoverPort,
+    licenseId,
+    weatherRoutingActive,
+    canalVipPassActive,
+    canalVipOwned,
+    tickFleetDispatches,
   ]);
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden flex flex-col bg-bridge-bg font-sans">
+    <div className="relative w-screen h-[100dvh] overflow-hidden flex flex-col bg-bridge-bg font-sans">
       <TopNavBar />
 
       <div className="relative flex-1 w-full h-full overflow-hidden">

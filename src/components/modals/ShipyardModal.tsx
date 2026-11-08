@@ -134,9 +134,12 @@ export const ShipyardModal: React.FC = () => {
         {/* 头部 */}
         <div className="px-4 py-3 md:px-6 md:py-4 bg-bridge-panelLight/60 border-b border-bridge-border flex items-center justify-between shrink-0">
           <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-lg bg-bridge-accent/20 border border-bridge-accent/40 flex items-center justify-center text-bridge-highlight shrink-0">
-              <Anchor size={18} />
-            </div>
+            <GameAsset
+              assetKey="hud_shipyard"
+              width={32}
+              height={32}
+              className="w-8 h-8 rounded-lg border border-bridge-accent/40 shrink-0 object-contain bg-[#0A1128]"
+            />
             <div>
               <div className="text-sm md:text-base font-bold text-white leading-tight">
                 {t.shipyard.title}
@@ -165,7 +168,12 @@ export const ShipyardModal: React.FC = () => {
                 : "border-transparent text-bridge-textMuted hover:text-white"
             }`}
           >
-            <Anchor size={13} />
+            <GameAsset
+              assetKey="hud_depth_anchor"
+              width={16}
+              height={16}
+              className="w-4 h-4 rounded-sm object-contain"
+            />
             <span>{t.shipyard.tabVessels}</span>
           </button>
           <button
@@ -176,7 +184,12 @@ export const ShipyardModal: React.FC = () => {
                 : "border-transparent text-bridge-textMuted hover:text-white"
             }`}
           >
-            <Cpu size={13} />
+            <GameAsset
+              assetKey="hud_shipyard"
+              width={16}
+              height={16}
+              className="w-4 h-4 rounded-sm object-contain"
+            />
             <span>
               {t.shipyard.tabUpgrades} ({activeVessel.installedUpgrades.length}/{maxSlots})
             </span>
@@ -189,7 +202,12 @@ export const ShipyardModal: React.FC = () => {
                 : "border-transparent text-bridge-textMuted hover:text-white"
             }`}
           >
-            <Award size={13} />
+            <GameAsset
+              assetKey="hud_xp_badge"
+              width={16}
+              height={16}
+              className="w-4 h-4 rounded-sm object-contain"
+            />
             <span>
               {t.shipyard.tabPerks} ({availablePerkPoints})
             </span>
@@ -387,18 +405,27 @@ export const ShipyardModal: React.FC = () => {
                           : "bg-bridge-panelLight/40 border-bridge-border"
                       }`}
                     >
-                      <div>
-                        <div className="text-xs font-bold text-white flex items-center justify-between">
-                          <span>{displayName}</span>
-                          <span className="text-amber-400 font-bold">
-                            {upg.price.toLocaleString()} CR
-                          </span>
-                        </div>
-                        <div className="text-[10px] text-bridge-textMuted mt-1">
-                          {displayDesc}
-                        </div>
-                        <div className="text-[9px] text-bridge-highlight mt-1">
-                          {t.shipyard.weightT}: {upg.weightT}t · {upg.category}
+                      <div className="flex items-start space-x-3">
+                        <GameAsset
+                          assetKey={upg.upgradeId}
+                          alt={displayName}
+                          width={44}
+                          height={44}
+                          className="w-11 h-11 rounded-xl border border-bridge-border/70 shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-bold text-white flex items-center justify-between">
+                            <span className="truncate">{displayName}</span>
+                            <span className="text-amber-400 font-bold shrink-0 ml-2">
+                              {upg.price.toLocaleString()} CR
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-bridge-textMuted mt-1">
+                            {displayDesc}
+                          </div>
+                          <div className="text-[9px] text-bridge-highlight mt-1">
+                            {t.shipyard.weightT}: {upg.weightT}t · {upg.category}
+                          </div>
                         </div>
                       </div>
 
@@ -458,15 +485,24 @@ export const ShipyardModal: React.FC = () => {
                           : "bg-bridge-panelLight/40 border-bridge-border"
                       }`}
                     >
-                      <div>
-                        <div className="text-xs font-bold text-white flex items-center justify-between">
-                          <span>{displayName}</span>
-                          <span className="text-[10px] text-bridge-highlight">
-                            LV.{perk.unlockLevel} · {perk.pointCost} PT
-                          </span>
-                        </div>
-                        <div className="text-[10px] text-bridge-textMuted mt-1">
-                          {displayDesc}
+                      <div className="flex items-start space-x-3">
+                        <GameAsset
+                          assetKey={perk.perkId}
+                          alt={displayName}
+                          width={44}
+                          height={44}
+                          className="w-11 h-11 rounded-xl border border-bridge-border/70 shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-bold text-white flex items-center justify-between">
+                            <span className="truncate">{displayName}</span>
+                            <span className="text-[10px] text-bridge-highlight shrink-0 ml-2">
+                              LV.{perk.unlockLevel} · {perk.pointCost} PT
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-bridge-textMuted mt-1">
+                            {displayDesc}
+                          </div>
                         </div>
                       </div>
 

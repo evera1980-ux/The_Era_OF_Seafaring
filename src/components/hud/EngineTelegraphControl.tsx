@@ -2,6 +2,7 @@ import React from "react";
 import { EngineTelegraph } from "../../types";
 import { useGameStore } from "../../store";
 import { useTranslation } from "../../i18n";
+import { GameAsset } from "../common/GameAsset";
 
 const TELEGRAPHS: EngineTelegraph[] = ["STOP", "SLOW", "HALF", "ECO", "FULL", "FLANK"];
 
@@ -12,8 +13,14 @@ export const EngineTelegraphControl: React.FC = () => {
 
   return (
     <div className="bg-bridge-panel/90 backdrop-blur border border-bridge-border rounded-xl p-3 shadow-2xl flex flex-col items-center select-none w-20">
-      <div className="text-[10px] font-mono text-bridge-accent font-bold tracking-wider mb-2">
-        TELEGRAPH
+      <div className="flex items-center space-x-1 text-[9px] font-mono text-bridge-accent font-bold tracking-wider mb-2">
+        <GameAsset
+          assetKey="hud_telegraph"
+          width={14}
+          height={14}
+          className="w-3.5 h-3.5 rounded-sm object-contain"
+        />
+        <span>TELEGRAPH</span>
       </div>
       <div className="flex flex-col-reverse space-y-reverse space-y-1.5 w-full">
         {TELEGRAPHS.map((level) => {

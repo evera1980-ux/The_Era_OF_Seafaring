@@ -8,9 +8,14 @@
     "build": "tsc && vite build",
     "lint": "tsc --noEmit",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "ios:sync": "npm run build && cap copy ios",
+    "ios:open": "cap open ios"
   },
   "dependencies": {
+    "@capacitor/cli": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/ios": "^8.6.0",
     "@deck.gl/geo-layers": "^9.0.38",
     "@deck.gl/layers": "^9.0.38",
     "@deck.gl/react": "^9.0.38",
@@ -34,6 +39,7 @@
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.3",
     "vite": "^6.1.0",
+    "vite-plugin-pwa": "^2.0.0",
     "vitest": "^3.0.5"
   }
 }

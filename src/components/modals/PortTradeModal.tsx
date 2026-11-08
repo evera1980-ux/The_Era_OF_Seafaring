@@ -12,6 +12,7 @@ import { calculateEffectiveCargoCapacityT } from "../../core/economy/upgrades";
 import { aggregateVesselBonuses } from "../../core/simulation/tick";
 import { makeCredits } from "../../types";
 import { GAME_BALANCE } from "../../config/gameBalance";
+import { GameAsset } from "../common/GameAsset";
 
 export const PortTradeModal: React.FC = () => {
   const activeModal = useGameStore((state) => state.activeModal);
@@ -384,9 +385,12 @@ export const PortTradeModal: React.FC = () => {
         {/* 头部 + 港口快切下拉 */}
         <div className="px-4 py-3 md:px-6 md:py-4 bg-bridge-panelLight/60 border-b border-bridge-border flex items-center justify-between shrink-0 gap-2">
           <div className="flex items-center space-x-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-bridge-safe/20 border border-bridge-safe/40 flex items-center justify-center text-bridge-safe text-sm shrink-0">
-              ⚓
-            </div>
+            <GameAsset
+              assetKey="hud_port_trade"
+              width={32}
+              height={32}
+              className="w-8 h-8 rounded-lg border border-bridge-safe/40 shrink-0 object-contain bg-[#0A1128]"
+            />
             <div className="min-w-0">
               <div className="text-sm md:text-base font-bold text-white flex items-center space-x-1.5">
                 <span className="truncate">{port.name}</span>
@@ -433,7 +437,12 @@ export const PortTradeModal: React.FC = () => {
                 : "border-transparent text-bridge-textMuted hover:text-white"
             }`}
           >
-            <Package size={13} />
+            <GameAsset
+              assetKey="hud_cargo_box"
+              width={16}
+              height={16}
+              className="w-4 h-4 rounded-sm object-contain"
+            />
             <span>{t.trade.tabCommodities}</span>
           </button>
           <button
@@ -444,7 +453,12 @@ export const PortTradeModal: React.FC = () => {
                 : "border-transparent text-bridge-textMuted hover:text-white"
             }`}
           >
-            <Fuel size={13} />
+            <GameAsset
+              assetKey="hud_fuel"
+              width={16}
+              height={16}
+              className="w-4 h-4 rounded-sm object-contain"
+            />
             <span>{t.trade.tabSupplies}</span>
           </button>
           <button
@@ -455,7 +469,12 @@ export const PortTradeModal: React.FC = () => {
                 : "border-transparent text-bridge-textMuted hover:text-white"
             }`}
           >
-            <Shield size={13} />
+            <GameAsset
+              assetKey="hud_hull"
+              width={16}
+              height={16}
+              className="w-4 h-4 rounded-sm object-contain"
+            />
             <span>{t.trade.tabRepair}</span>
           </button>
         </div>
@@ -528,16 +547,25 @@ export const PortTradeModal: React.FC = () => {
                           key={c.cargoId}
                           className="bg-bridge-panelLight/50 p-2.5 rounded-lg border border-bridge-border flex items-center justify-between"
                         >
-                          <div>
-                            <div className="text-xs font-bold text-white">
-                              {comm?.name}
-                            </div>
-                            <div className="text-[10px] text-bridge-textMuted">
-                              {c.quantityT}
-                              {t.common.tons} · IN {c.unitBuyPrice} CR/t ➔ OUT{" "}
-                              <span className="text-bridge-safe font-bold">
-                                {estUnitSell} CR/t
-                              </span>
+                          <div className="flex items-center space-x-2.5">
+                            <GameAsset
+                              assetKey={c.commodityId}
+                              alt={comm?.name}
+                              width={36}
+                              height={36}
+                              className="w-9 h-9 rounded-lg border border-bridge-border/60 shrink-0"
+                            />
+                            <div>
+                              <div className="text-xs font-bold text-white">
+                                {comm?.name}
+                              </div>
+                              <div className="text-[10px] text-bridge-textMuted">
+                                {c.quantityT}
+                                {t.common.tons} · IN {c.unitBuyPrice} CR/t ➔ OUT{" "}
+                                <span className="text-bridge-safe font-bold">
+                                  {estUnitSell} CR/t
+                                </span>
+                              </div>
                             </div>
                           </div>
                           <button
@@ -585,29 +613,38 @@ export const PortTradeModal: React.FC = () => {
                         }`}
                       >
                         <div className="flex items-start justify-between">
-                          <div>
-                            <div className="text-xs font-bold text-white flex items-center space-x-1.5">
-                              <span>{comm.name}</span>
-                              <span className="text-[9px] px-1 rounded bg-bridge-bg text-bridge-textMuted border border-bridge-border">
-                                {comm.category}
-                              </span>
-                              {isSpecialty && (
-                                <span className="text-[9px] px-1 rounded bg-emerald-500/20 text-bridge-safe border border-bridge-safe/40">
-                                  ★ {t.trade.portSpecialties}
+                          <div className="flex items-center space-x-2.5">
+                            <GameAsset
+                              assetKey={comm.commodityId}
+                              alt={comm.name}
+                              width={40}
+                              height={40}
+                              className="w-10 h-10 rounded-lg border border-bridge-border/60 shrink-0"
+                            />
+                            <div>
+                              <div className="text-xs font-bold text-white flex items-center space-x-1.5">
+                                <span>{comm.name}</span>
+                                <span className="text-[9px] px-1 rounded bg-bridge-bg text-bridge-textMuted border border-bridge-border">
+                                  {comm.category}
                                 </span>
-                              )}
-                            </div>
-                            <div className="text-[10px] text-bridge-textMuted mt-0.5">
-                              {t.trade.unitPrice}:{" "}
-                              <span className="text-amber-400 font-bold">
-                                {buyPrice} CR/t
-                              </span>
-                              {portComm && (
-                                <span className="ml-2">
-                                  · {t.trade.stockLevel}:{" "}
-                                  {portComm.stockT.toLocaleString()}t
+                                {isSpecialty && (
+                                  <span className="text-[9px] px-1 rounded bg-emerald-500/20 text-bridge-safe border border-bridge-safe/40">
+                                    ★ {t.trade.portSpecialties}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[10px] text-bridge-textMuted mt-0.5">
+                                {t.trade.unitPrice}:{" "}
+                                <span className="text-amber-400 font-bold">
+                                  {buyPrice} CR/t
                                 </span>
-                              )}
+                                {portComm && (
+                                  <span className="ml-2">
+                                    · {t.trade.stockLevel}:{" "}
+                                    {portComm.stockT.toLocaleString()}t
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -671,7 +708,12 @@ export const PortTradeModal: React.FC = () => {
                   <div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-1.5 text-amber-400 font-bold text-xs">
-                        <Fuel size={14} />
+                        <GameAsset
+                          assetKey="hud_fuel"
+                          width={20}
+                          height={20}
+                          className="w-5 h-5 rounded-sm object-contain"
+                        />
                         <span>{t.trade.buyFuelTitle}</span>
                       </div>
                       <span className="text-[10px] text-amber-300 font-bold">
@@ -741,7 +783,12 @@ export const PortTradeModal: React.FC = () => {
                   <div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-1.5 text-sky-400 font-bold text-xs">
-                        <Droplets size={14} />
+                        <GameAsset
+                          assetKey="hud_water"
+                          width={20}
+                          height={20}
+                          className="w-5 h-5 rounded-sm object-contain"
+                        />
                         <span>{t.trade.buyWaterTitle}</span>
                       </div>
                       <span className="text-[10px] text-sky-300 font-bold">
@@ -815,7 +862,12 @@ export const PortTradeModal: React.FC = () => {
                   <div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-1.5 text-emerald-400 font-bold text-xs">
-                        <Utensils size={14} />
+                        <GameAsset
+                          assetKey="hud_food"
+                          width={20}
+                          height={20}
+                          className="w-5 h-5 rounded-sm object-contain"
+                        />
                         <span>{t.trade.buyRationTitle}</span>
                       </div>
                       <span className="text-[10px] text-emerald-300 font-bold">
@@ -888,7 +940,12 @@ export const PortTradeModal: React.FC = () => {
                   <div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-1.5 text-purple-400 font-bold text-xs">
-                        <Wrench size={14} />
+                        <GameAsset
+                          assetKey="hud_parts"
+                          width={20}
+                          height={20}
+                          className="w-5 h-5 rounded-sm object-contain"
+                        />
                         <span>{t.trade.buyPartsTitle}</span>
                       </div>
                       <span className="text-[10px] text-purple-300 font-bold">

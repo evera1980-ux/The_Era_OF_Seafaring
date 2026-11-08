@@ -3,14 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#050B16" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Seafaring" />
     <meta name="description" content="1:1 real-world maritime navigation, live ocean weather & AIS fleet simulation, and global port trade strategy game." />
     <meta property="og:title" content="The Era of Seafaring: Live Ocean" />
     <meta property="og:description" content="1:1 real-world maritime navigation, live ocean weather & AIS fleet simulation, and global port trade strategy game." />
     <title>The Era of Seafaring: Live Ocean</title>
     <link href="https://unpkg.com/maplibre-gl@5.1.0/dist/maplibre-gl.css" rel="stylesheet" />
   </head>
-  <body class="bg-bridge-bg text-bridge-text select-none overflow-hidden h-screen w-screen">
+  <body class="bg-bridge-bg text-bridge-text select-none overflow-hidden h-[100dvh] w-screen">
     <div id="root" class="h-full w-full"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
