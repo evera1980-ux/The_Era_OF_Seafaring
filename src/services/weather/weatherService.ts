@@ -1,4 +1,6 @@
 import { GeoPosition, MarineWeatherCell, ServiceResult, makeUnixMs } from "../../types";
+import { weatherCache } from "./weatherCache";
+import { fetchOpenMeteoMarineWeather } from "./openMeteoClient";
 
 /**
  * 依据地理纬度带和微气候模拟真实海洋气象（信风带、西风带、赤道无风带、温带气旋）
@@ -70,7 +72,7 @@ export function generateSyntheticWeather(pos: GeoPosition): MarineWeatherCell {
       east: currentSpeed * Math.sin(currentRad),
       north: currentSpeed * Math.cos(currentRad),
     },
-    pressureHpa: 1013 - (windSpeed > 25 ? (windSpeed - 20) * 1.2 : 0),
+    pressureHpa: Math.round(1013 - (windSpeed > 25 ? (windSpeed - 20) * 1.2 : 0)),
     beaufortScale: beaufort,
     source: "SYNTHETIC",
     quality: "OBSERVED",
@@ -79,10 +81,31 @@ export function generateSyntheticWeather(pos: GeoPosition): MarineWeatherCell {
 
 export class WeatherService {
   async getWeatherAt(pos: GeoPosition): Promise<ServiceResult<MarineWeatherCell>> {
-    // 默认内置高仿真气象，网络通畅且配置时可切 Open-Meteo
-    const data = generateSyntheticWeather(pos);
+    const cached = weatherCache.get(pos);
+    if (cached) {
+      return {
+        data: cached,
+        receivedAt: makeUnixMs(Date.now()),
+        stale: false,
+        source: cached.source,
+      };
+    }
+
+    const liveCell = await fetchOpenMeteoMarineWeather(pos);
+    if (liveCell) {
+      weatherCache.set(pos, liveCell);
+      return {
+        data: liveCell,
+        receivedAt: makeUnixMs(Date.now()),
+        stale: false,
+        source: "OPEN_METEO",
+      };
+    }
+
+    const fallback = generateSyntheticWeather(pos);
+    weatherCache.set(pos, fallback);
     return {
-      data,
+      data: fallback,
       receivedAt: makeUnixMs(Date.now()),
       stale: false,
       source: "SYNTHETIC_OFFLINE",

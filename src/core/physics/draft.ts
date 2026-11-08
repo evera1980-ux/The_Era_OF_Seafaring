@@ -14,8 +14,8 @@ export function calculateCurrentDraft(
 
   const loadRatio = Math.min(1.0, Math.max(0.0, currentPayloadT / Math.max(1, vessel.dwtT)));
   const draftDelta = vessel.loadedDraftM - vessel.lightDraftM;
-  const draftM = vessel.lightDraftM + draftDelta * loadRatio;
-  const displacementT = vessel.lightDisplacementT + currentPayloadT;
+  const draftM = Math.round((vessel.lightDraftM + draftDelta * loadRatio) * 10) / 10;
+  const displacementT = Math.round((vessel.lightDisplacementT + currentPayloadT) * 10) / 10;
 
   return { draftM, displacementT };
 }

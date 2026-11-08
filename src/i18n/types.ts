@@ -60,6 +60,15 @@ export interface TranslationDictionary {
     metMobile: string;
     logisticsMobile: string;
     menuMobile: string;
+    awa: string;
+    noGoZone: string;
+    optimalSail: string;
+    roMaker: string;
+    seaRepair: string;
+    fuelRate: string;
+    rangeNM: string;
+    windLayer: string;
+    rangeRing: string;
   };
   dock: {
     routePlan: string;
@@ -84,6 +93,9 @@ export interface TranslationDictionary {
     startPoint: string;
     startVoyageBtn: string;
     autopilotNotice: string;
+    estimatedFuel: string;
+    draftCheckSafe: string;
+    draftCheckDanger: string;
   };
   trade: {
     title: string;
@@ -92,12 +104,16 @@ export interface TranslationDictionary {
     portFee: string;
     tabCommodities: string;
     tabSupplies: string;
+    tabRepair: string;
     cargoHold: string;
     cargoEmpty: string;
     sellBtn: string;
     marketList: string;
     unitPrice: string;
+    load1t: string;
     load5t: string;
+    load25t: string;
+    loadMax: string;
     buyFuelTitle: string;
     buyWaterTitle: string;
     buyRationTitle: string;
@@ -108,12 +124,20 @@ export interface TranslationDictionary {
     add05t: string;
     add2t: string;
     add02t: string;
+    hullRepairTitle: string;
+    repair100: string;
+    repairFull: string;
+    fillAllSupplies: string;
+    distanceBonus: string;
+    stockLevel: string;
+    portSpecialties: string;
   };
   shipyard: {
     title: string;
     subtitle: string;
     tabVessels: string;
     tabUpgrades: string;
+    tabPerks: string;
     selectVessel: string;
     propulsion: string;
     unlockLevel: string;
@@ -129,6 +153,12 @@ export interface TranslationDictionary {
     buyBtn: string;
     levelLocked: string;
     purchaseUpgrade: string;
+    installed: string;
+    slotsUsed: string;
+    perkPoints: string;
+    unlockPerk: string;
+    perkUnlocked: string;
+    weightT: string;
   };
   ais: {
     title: string;
@@ -139,6 +169,10 @@ export interface TranslationDictionary {
     destination: string;
     draft: string;
     noTargets: string;
+    spotShipBtn: string;
+    spotted: string;
+    distanceNM: string;
+    fleetList: string;
   };
   mayday: {
     title: string;
@@ -149,11 +183,27 @@ export interface TranslationDictionary {
     emergencySupplies: string;
     emergencySuppliesFree: string;
     sendSignalBtn: string;
+    aisAidTitle: string;
+    aisAidDesc: string;
+    aisAidBtn: string;
+    refloatTitle: string;
+    refloatDesc: string;
+    refloatBtn: string;
   };
   journal: {
     title: string;
     subtitle: string;
     empty: string;
+    tabLogs: string;
+    tabContracts: string;
+    tabAtlas: string;
+    acceptContract: string;
+    completeContract: string;
+    contractReward: string;
+    contractActive: string;
+    contractDone: string;
+    portsDiscovered: string;
+    shipsSpotted: string;
   };
   troubleshoot: {
     title: string;

@@ -49,7 +49,7 @@ export const TopNavBar: React.FC = () => {
         <div className="flex items-center space-x-1">
           <Award size={12} className="text-bridge-safe shrink-0" />
           <span className="text-bridge-textMuted">L{level}</span>
-          <span className="text-bridge-safe font-bold hidden xs:inline">{xp}xp</span>
+          <span className="text-bridge-safe font-bold hidden xs:inline">{Math.round(xp)}xp</span>
         </div>
       </div>
 

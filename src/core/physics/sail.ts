@@ -36,6 +36,16 @@ export function calculateApparentWind(
 }
 
 /**
+ * 计算船首向相对于真风向的夹角绝对值 (0~180°)
+ */
+export function calculateApparentWindAngle(
+  headingDeg: number,
+  trueWindDirDeg: number
+): number {
+  return Math.abs(normalizeAngle180(trueWindDirDeg - headingDeg));
+}
+
+/**
  * 依据极坐标 Polar 曲线插值计算风帆效率系数 (0.0 ~ 1.15)
  */
 export function getSailEfficiency(awaDeg: number): number {

@@ -1,10 +1,23 @@
 import React, { useState } from "react";
 import { useGameStore } from "../../store";
 import { PORTS } from "../../config/ports";
+import { VESSELS } from "../../config/vessels";
 import { createPassagePlan } from "../../core/route/routePlanner";
+import { validateRouteFeasibility } from "../../core/route/routeValidation";
 import { calculateDistanceNM } from "../../core/physics/navigation";
-import { X, Navigation, Compass, MapPin, Play, Clock, ShieldAlert } from "lucide-react";
-import { PortInfo, RouteWaypoint } from "../../types";
+import {
+  X,
+  Navigation,
+  Compass,
+  MapPin,
+  Play,
+  Clock,
+  ShieldAlert,
+  Fuel,
+  AlertTriangle,
+  CheckCircle2,
+} from "lucide-react";
+import { RouteWaypoint } from "../../types";
 import { useTranslation } from "../../i18n";
 
 export const RoutePlannerModal: React.FC = () => {
@@ -19,15 +32,29 @@ export const RoutePlannerModal: React.FC = () => {
 
   const [selectedPortId, setSelectedPortId] = useState<string>("JPYOK");
 
-  if (activeModal !== ("ROUTE_PLANNER" as any)) return null;
+  const setHeadingDeg = useGameStore((state) => state.setHeadingDeg);
+  const gameClock = useGameStore((state) => state.gameClock);
+  const togglePause = useGameStore((state) => state.togglePause);
+  const setTimeScale = useGameStore((state) => state.setTimeScale);
+
+  if (activeModal !== "ROUTE_PLANNER") return null;
 
   const portsList = Object.values(PORTS);
   const targetPort = PORTS[selectedPortId] || portsList[0];
+  const vesselSpec = VESSELS[activeVessel.vesselId] ?? VESSELS.V001;
 
   const plan = createPassagePlan(
     activeVessel.position,
     targetPort,
-    activeVessel.sogKn > 1 ? activeVessel.sogKn : 8
+    activeVessel.sogKn > 1 ? activeVessel.sogKn : vesselSpec.ecoSpeedKn,
+    vesselSpec
+  );
+
+  const feasibility = validateRouteFeasibility(
+    activeVessel.currentDraftM,
+    targetPort,
+    plan.estimatedFuelT,
+    vesselSpec
   );
 
   const handleStartVoyage = () => {
@@ -36,10 +63,26 @@ export const RoutePlannerModal: React.FC = () => {
     if (activeVessel.engineTelegraph === "STOP") {
       setEngineTelegraph("FULL");
     }
+    if (plan.waypoints.length > 0) {
+      const firstWp = plan.waypoints[0];
+      const dLon = ((firstWp.position.longitude - activeVessel.position.longitude) * Math.PI) / 180;
+      const lat1 = (activeVessel.position.latitude * Math.PI) / 180;
+      const lat2 = (firstWp.position.latitude * Math.PI) / 180;
+      const y = Math.sin(dLon) * Math.cos(lat2);
+      const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+      const initialBearing = Math.round(((Math.atan2(y, x) * 180) / Math.PI + 360) % 360);
+      setHeadingDeg(initialBearing);
+    }
+    if (gameClock.paused) {
+      togglePause();
+    }
+    if (gameClock.timeScale < 5) {
+      setTimeScale(5);
+    }
     const logMsg =
       language === "zh"
-        ? `航线已加载！已设定航运目的港为：${targetPort.name}，自动舵系统（Autopilot）已接管航向！`
-        : `Passage plan loaded! Destination set to ${targetPort.name}. Autopilot engaged!`;
+        ? `🧭 大圆航线已加载！目的港：${targetPort.name} (${Math.round(plan.totalDistanceNM)} NM)，自动舵系统已接管航向并全速起航！`
+        : `🧭 Great Circle Passage loaded! Destination: ${targetPort.name} (${Math.round(plan.totalDistanceNM)} NM). Autopilot engaged!`;
     addLog(logMsg, "INFO");
     closeModal();
   };
@@ -63,7 +106,7 @@ export const RoutePlannerModal: React.FC = () => {
 
           <button
             onClick={closeModal}
-            className="p-1 rounded-lg text-bridge-textMuted hover:text-white bg-bridge-panel border border-bridge-border"
+            className="p-1.5 rounded-lg text-bridge-textMuted hover:text-white bg-bridge-panel border border-bridge-border"
           >
             <X size={16} />
           </button>
@@ -73,10 +116,15 @@ export const RoutePlannerModal: React.FC = () => {
         <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-0 md:grid md:grid-cols-3 md:gap-6">
           {/* 目的港选择 */}
           <div className="md:col-span-1 space-y-2 md:border-r md:border-bridge-border md:pr-4">
-            <div className="text-xs text-bridge-textMuted font-bold">{t.routePlanner.selectTargetPort}</div>
-            <div className="grid grid-cols-2 md:grid-cols-1 gap-1.5 max-h-[35vh] md:max-h-[50vh] overflow-y-auto pr-1">
+            <div className="text-xs text-bridge-textMuted font-bold">
+              {t.routePlanner.selectTargetPort} ({portsList.length})
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-1 gap-1.5 max-h-[32vh] md:max-h-[52vh] overflow-y-auto pr-1">
               {portsList.map((port) => {
-                const distance = calculateDistanceNM(activeVessel.position, port.position);
+                const distance = calculateDistanceNM(
+                  activeVessel.position,
+                  port.position
+                );
                 const isSelected = selectedPortId === port.portId;
 
                 return (
@@ -99,7 +147,10 @@ export const RoutePlannerModal: React.FC = () => {
                     </div>
                     <div className="text-[9px] text-bridge-textMuted flex justify-between">
                       <span>{port.unlocode}</span>
-                      <span>{t.trade.maxDraft}: {port.maxAllowedDraftM}{t.common.meter}</span>
+                      <span>
+                        {t.trade.maxDraft}: {Number(port.maxAllowedDraftM.toFixed(1))}
+                        {t.common.meter}
+                      </span>
                     </div>
                   </div>
                 );
@@ -110,18 +161,20 @@ export const RoutePlannerModal: React.FC = () => {
           {/* 航线详情 */}
           <div className="md:col-span-2 flex flex-col justify-between space-y-4">
             <div className="space-y-3">
-              <div className="bg-bridge-panelLight/40 p-3 md:p-4 rounded-xl border border-bridge-border space-y-2">
+              <div className="bg-bridge-panelLight/40 p-3 md:p-4 rounded-xl border border-bridge-border space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="text-sm md:text-base font-bold text-white flex items-center space-x-1.5 truncate">
                     <MapPin size={15} className="text-bridge-safe shrink-0" />
-                    <span className="truncate">{t.routePlanner.destination}: {targetPort.name}</span>
+                    <span className="truncate">
+                      {t.routePlanner.destination}: {targetPort.name}
+                    </span>
                   </div>
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-bridge-panel border border-bridge-border text-bridge-safe shrink-0">
                     {targetPort.unlocode}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 text-xs pt-1">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs pt-1">
                   <div className="bg-bridge-panel p-2 rounded-lg border border-bridge-border flex flex-col">
                     <span className="text-bridge-textMuted text-[10px] flex items-center space-x-1">
                       <Compass size={11} />
@@ -138,7 +191,24 @@ export const RoutePlannerModal: React.FC = () => {
                       <span>{t.routePlanner.estimatedTime}</span>
                     </span>
                     <span className="font-bold text-amber-400 mt-0.5 text-xs md:text-sm">
-                      ~{Math.round(plan.estimatedDurationGameHours)} {t.common.hours}
+                      ~{Math.round(plan.estimatedDurationGameHours)}{" "}
+                      {t.common.hours}
+                    </span>
+                  </div>
+
+                  <div className="bg-bridge-panel p-2 rounded-lg border border-bridge-border flex flex-col">
+                    <span className="text-bridge-textMuted text-[10px] flex items-center space-x-1">
+                      <Fuel size={11} />
+                      <span>{t.routePlanner.estimatedFuel}</span>
+                    </span>
+                    <span
+                      className={`font-bold mt-0.5 text-xs md:text-sm ${
+                        feasibility.hasSufficientFuelCapacity
+                          ? "text-bridge-safe"
+                          : "text-bridge-danger"
+                      }`}
+                    >
+                      {plan.estimatedFuelT.toFixed(1)} {t.common.tons}
                     </span>
                   </div>
 
@@ -148,9 +218,31 @@ export const RoutePlannerModal: React.FC = () => {
                       <span>{t.routePlanner.seaRisk}</span>
                     </span>
                     <span className="font-bold text-bridge-safe mt-0.5 text-xs md:text-sm">
-                      {plan.totalDistanceNM > 2000 ? t.routePlanner.mediumRisk : t.routePlanner.lowRisk}
+                      {plan.totalDistanceNM > 2000
+                        ? t.routePlanner.mediumRisk
+                        : t.routePlanner.lowRisk}
                     </span>
                   </div>
+                </div>
+
+                {/* 目的港吃水安全校验条 */}
+                <div
+                  className={`p-2 rounded-lg border text-xs flex items-center space-x-2 ${
+                    feasibility.canEnterPort
+                      ? "bg-emerald-950/30 border-bridge-safe/50 text-bridge-safe"
+                      : "bg-red-950/40 border-bridge-danger text-bridge-danger"
+                  }`}
+                >
+                  {feasibility.canEnterPort ? (
+                    <CheckCircle2 size={14} className="shrink-0" />
+                  ) : (
+                    <AlertTriangle size={14} className="shrink-0" />
+                  )}
+                  <span>
+                    {feasibility.canEnterPort
+                      ? `${t.routePlanner.draftCheckSafe} (${activeVessel.currentDraftM.toFixed(1)}m / ${Number(targetPort.maxAllowedDraftM.toFixed(1))}m)`
+                      : `${t.routePlanner.draftCheckDanger} (${activeVessel.currentDraftM.toFixed(1)}m > ${Number(targetPort.maxAllowedDraftM.toFixed(1))}m)`}
+                  </span>
                 </div>
               </div>
 
@@ -167,7 +259,8 @@ export const RoutePlannerModal: React.FC = () => {
                   {plan.waypoints.map((wp: RouteWaypoint, idx: number) => (
                     <React.Fragment key={wp.waypointId}>
                       <span className="px-1.5 py-0.5 rounded bg-bridge-panel border border-bridge-border text-bridge-text whitespace-nowrap">
-                        WP{idx + 1}
+                        WP{idx + 1} ({wp.position.latitude.toFixed(1)}°,{" "}
+                        {wp.position.longitude.toFixed(1)}°)
                       </span>
                       {idx < plan.waypoints.length - 1 && <span>➔</span>}
                     </React.Fragment>

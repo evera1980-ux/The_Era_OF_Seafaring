@@ -20,7 +20,7 @@ export const SeaWindowWidget: React.FC = () => {
 
       <div className="relative w-full h-24 rounded-lg overflow-hidden border border-bridge-border bg-gradient-to-b from-[#0a2540] via-[#071a2e] to-[#040e1a] flex flex-col justify-end">
         <div className="absolute top-2 right-2 text-[9px] text-bridge-textMuted bg-bridge-bg/70 px-1 rounded">
-          {weather.windSpeedKn} {t.common.knots} / {weather.windDirectionDeg}°
+          {Math.round(weather.windSpeedKn)} {t.common.knots} / {Math.round(weather.windDirectionDeg)}°
         </div>
 
         <div className="relative w-full h-14 overflow-hidden">
@@ -50,7 +50,7 @@ export const SeaWindowWidget: React.FC = () => {
         <div className="absolute inset-x-0 bottom-1 flex justify-between px-2 text-[10px] text-white/90 z-10">
           <span className="flex items-center space-x-1">
             <Waves size={11} className="text-bridge-highlight" />
-            <span>Hs: {weather.significantWaveHeightM}{t.common.meter}</span>
+            <span>Hs: {weather.significantWaveHeightM.toFixed(1)}{t.common.meter}</span>
           </span>
           <span className="flex items-center space-x-1">
             <Gauge size={11} className="text-bridge-accent" />
@@ -73,7 +73,7 @@ export const SeaWindowWidget: React.FC = () => {
         <div className="bg-bridge-panelLight/50 p-1.5 rounded border border-bridge-border flex flex-col">
           <span className="text-bridge-textMuted">{t.hud.draft}</span>
           <span className="font-bold mt-0.5 text-bridge-highlight">
-            {activeVessel.currentDraftM.toFixed(2)} {t.common.meter}
+            {activeVessel.currentDraftM.toFixed(1)} {t.common.meter}
           </span>
         </div>
       </div>

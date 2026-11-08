@@ -46,3 +46,18 @@
 
 1. 船舶动力学、油耗立方计算、风帆极坐标效率、波浪失速损耗、洋流合成与大圆航线必须保持为 `src/core/physics/` 下的无副作用纯函数；
 2. 任何物理公式修改必须通过 `npm run test` 中的 Vitest 单元测试验收。
+
+---
+
+## 核心铁律四：多人/多 Agent 协同任务认领与文件独占锁规范 (Multi-Developer Task Lock Protocol)
+
+> **原则**：严禁两人在未登记的情况下开发同一功能或同时修改同一文件！
+
+1. **先打卡锁单，后动手写码（Claim Before Coding）**：
+   - 开始任何功能开发前，必须先查阅 [`/COLLABORATIVE_DEV_PLAN.md`](./COLLABORATIVE_DEV_PLAN.md) 与 [`/AGENTS.md`](./AGENTS.md)；
+   - 在任务认领表中将目标任务状态由 `⚪ OPEN` 改为 `🟡 IN_PROGRESS`，并登记你的开发者姓名/Agent ID 与分支名。
+2. **严守工作包文件边界（Strict Work Package Ownership）**：
+   - 仅允许修改你所认领工作包（`WP-01` ~ `WP-08`）白名单内的文件；对于其他工作包名下的文件仅允许只读引用（`READERS`）。
+3. **完工验收释放锁（Verify & Release）**：
+   - 合入代码前必须同时通过 `npm run build` 与 `npm run test`，并在 [`/COLLABORATIVE_DEV_PLAN.md`](./COLLABORATIVE_DEV_PLAN.md) 中将任务标记为 `✅ DONE`。
+

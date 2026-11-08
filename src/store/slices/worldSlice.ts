@@ -3,8 +3,6 @@ import {
   GameClockState,
   MarineWeatherCell,
   AISVesselTarget,
-  PortInfo,
-  makeUnixMs,
   makeLat,
   makeLon,
 } from "../../types";
@@ -18,15 +16,26 @@ export interface WorldSlice {
   currentDepthM: number;
   aisTargets: AISVesselTarget[];
   discoveredPortIds: string[];
-  systemLogs: { id: string; timestamp: number; text: string; type: "INFO" | "WARN" | "ALERT" }[];
+  collectedAISIds: string[];
+  activeContractIds: string[];
+  completedContractIds: string[];
+  systemLogs: {
+    id: string;
+    timestamp: number;
+    text: string;
+    type: "INFO" | "WARN" | "ALERT";
+  }[];
   language: SupportedLanguage;
-  
+
   setTimeScale: (scale: GameClockState["timeScale"]) => void;
   togglePause: () => void;
   updateWeather: (cell: MarineWeatherCell) => void;
   updateDepth: (depthM: number) => void;
   updateAISTargets: (targets: AISVesselTarget[]) => void;
   discoverPort: (portId: string) => void;
+  collectAISTarget: (targetId: string) => boolean;
+  acceptContract: (contractId: string) => void;
+  completeContract: (contractId: string) => boolean;
   addLog: (text: string, type?: "INFO" | "WARN" | "ALERT") => void;
   setLanguage: (lang: SupportedLanguage) => void;
 }
@@ -41,7 +50,10 @@ const getInitialLanguage = (): SupportedLanguage => {
   try {
     const saved = localStorage.getItem("seafaring_lang");
     if (saved === "zh" || saved === "en") return saved;
-    if (typeof navigator !== "undefined" && navigator.language?.toLowerCase().startsWith("en")) {
+    if (
+      typeof navigator !== "undefined" &&
+      navigator.language?.toLowerCase().startsWith("en")
+    ) {
       return "en";
     }
   } catch (e) {
@@ -50,7 +62,7 @@ const getInitialLanguage = (): SupportedLanguage => {
   return "zh";
 };
 
-export const createWorldSlice: StateCreator<WorldSlice> = (set) => ({
+export const createWorldSlice: StateCreator<WorldSlice> = (set, get) => ({
   gameClock: {
     gameTimeMs: Date.now(),
     realTimeMs: Date.now(),
@@ -61,6 +73,9 @@ export const createWorldSlice: StateCreator<WorldSlice> = (set) => ({
   currentDepthM: 25.0,
   aisTargets: [],
   discoveredPortIds: ["CNSHA"],
+  collectedAISIds: [],
+  activeContractIds: ["CNT_001"],
+  completedContractIds: [],
   systemLogs: [
     {
       id: "log_0",
@@ -83,13 +98,54 @@ export const createWorldSlice: StateCreator<WorldSlice> = (set) => ({
 
   updateWeather: (cell) => set({ currentWeather: cell }),
   updateDepth: (depthM) => set({ currentDepthM: depthM }),
-  updateAISTargets: (targets) => set({ aisTargets: targets }),
+  updateAISTargets: (targets) =>
+    set((state) => ({
+      aisTargets: targets.map((t) => ({
+        ...t,
+        isCollectedInShipBook: state.collectedAISIds.includes(t.targetId),
+      })),
+    })),
 
   discoverPort: (portId) =>
     set((state) => {
       if (state.discoveredPortIds.includes(portId)) return state;
       return { discoveredPortIds: [...state.discoveredPortIds, portId] };
     }),
+
+  collectAISTarget: (targetId) => {
+    const { collectedAISIds, aisTargets } = get();
+    if (collectedAISIds.includes(targetId)) return false;
+    set({
+      collectedAISIds: [...collectedAISIds, targetId],
+      aisTargets: aisTargets.map((t) =>
+        t.targetId === targetId ? { ...t, isCollectedInShipBook: true } : t
+      ),
+    });
+    return true;
+  },
+
+  acceptContract: (contractId) =>
+    set((state) => {
+      if (
+        state.activeContractIds.includes(contractId) ||
+        state.completedContractIds.includes(contractId)
+      ) {
+        return state;
+      }
+      return {
+        activeContractIds: [...state.activeContractIds, contractId],
+      };
+    }),
+
+  completeContract: (contractId) => {
+    const { activeContractIds, completedContractIds } = get();
+    if (!activeContractIds.includes(contractId)) return false;
+    set({
+      activeContractIds: activeContractIds.filter((id) => id !== contractId),
+      completedContractIds: [...completedContractIds, contractId],
+    });
+    return true;
+  },
 
   addLog: (text, type = "INFO") =>
     set((state) => ({

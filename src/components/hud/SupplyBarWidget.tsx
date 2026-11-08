@@ -50,12 +50,12 @@ export const SupplyBarWidget: React.FC = () => {
           <div className="flex-1">
             <div className="flex justify-between">
               <span className="text-bridge-textMuted">{t.hud.crew}</span>
-              <span className="font-bold">{activeVessel.crewHealth}%</span>
+              <span className="font-bold">{Math.round(activeVessel.crewHealth)}%</span>
             </div>
             <div className="w-full h-1 bg-bridge-bg rounded-full overflow-hidden mt-0.5">
               <div
                 className="h-full bg-bridge-highlight"
-                style={{ width: `${activeVessel.crewHealth}%` }}
+                style={{ width: `${Math.round(activeVessel.crewHealth)}%` }}
               />
             </div>
           </div>
@@ -88,7 +88,7 @@ export const SupplyBarWidget: React.FC = () => {
               style={{ width: `${waterPct}%` }}
             />
           </div>
-          <span className="w-16 text-right font-mono">{supplies.freshWaterT.toFixed(2)}{t.common.tons}</span>
+          <span className="w-16 text-right font-mono">{supplies.freshWaterT.toFixed(1)}{t.common.tons}</span>
         </div>
 
         {/* 口粮 */}
@@ -101,7 +101,7 @@ export const SupplyBarWidget: React.FC = () => {
               style={{ width: `${rationPct}%` }}
             />
           </div>
-          <span className="w-16 text-right font-mono">{supplies.rationT.toFixed(2)}{t.common.tons}</span>
+          <span className="w-16 text-right font-mono">{supplies.rationT.toFixed(1)}{t.common.tons}</span>
         </div>
 
         {/* 维修备件 */}
@@ -114,7 +114,7 @@ export const SupplyBarWidget: React.FC = () => {
               style={{ width: `${partsPct}%` }}
             />
           </div>
-          <span className="w-16 text-right font-mono">{supplies.sparePartsT.toFixed(2)}{t.common.tons}</span>
+          <span className="w-16 text-right font-mono">{supplies.sparePartsT.toFixed(1)}{t.common.tons}</span>
         </div>
       </div>
 

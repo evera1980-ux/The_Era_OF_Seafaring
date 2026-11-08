@@ -1,0 +1,189 @@
+{
+  "version": 1,
+  "assets": {
+    "vessel.tier1.sloop": {
+      "assetId": "vessel.tier1.sloop",
+      "mode": "procedural",
+      "width": 64,
+      "height": 64,
+      "proceduralGenerator": "vesselSvg",
+      "cache": true
+    },
+    "vessel.tier1.harborTrader": {
+      "assetId": "vessel.tier1.harborTrader",
+      "mode": "procedural",
+      "width": 64,
+      "height": 64,
+      "proceduralGenerator": "vesselSvg",
+      "cache": true
+    },
+    "vessel.tier2.oceanSloop": {
+      "assetId": "vessel.tier2.oceanSloop",
+      "mode": "procedural",
+      "width": 64,
+      "height": 64,
+      "proceduralGenerator": "vesselSvg",
+      "cache": true
+    },
+    "vessel.tier2.feeder120": {
+      "assetId": "vessel.tier2.feeder120",
+      "mode": "procedural",
+      "width": 64,
+      "height": 64,
+      "proceduralGenerator": "vesselSvg",
+      "cache": true
+    },
+    "vessel.tier3.windClipper": {
+      "assetId": "vessel.tier3.windClipper",
+      "mode": "procedural",
+      "width": 64,
+      "height": 64,
+      "proceduralGenerator": "vesselSvg",
+      "cache": true
+    },
+    "vessel.tier3.researchVessel": {
+      "assetId": "vessel.tier3.researchVessel",
+      "mode": "procedural",
+      "width": 64,
+      "height": 64,
+      "proceduralGenerator": "vesselSvg",
+      "cache": true
+    },
+    "vessel.tier4.panamax": {
+      "assetId": "vessel.tier4.panamax",
+      "mode": "procedural",
+      "width": 64,
+      "height": 64,
+      "proceduralGenerator": "vesselSvg",
+      "cache": true
+    },
+    "vessel.tier4.oceanExplorer": {
+      "assetId": "vessel.tier4.oceanExplorer",
+      "mode": "procedural",
+      "width": 64,
+      "height": 64,
+      "proceduralGenerator": "vesselSvg",
+      "cache": true
+    },
+    "vessel.tier5.capeBulk": {
+      "assetId": "vessel.tier5.capeBulk",
+      "mode": "procedural",
+      "width": 64,
+      "height": 64,
+      "proceduralGenerator": "vesselSvg",
+      "cache": true
+    },
+    "vessel.tier5.arcticResearch": {
+      "assetId": "vessel.tier5.arcticResearch",
+      "mode": "procedural",
+      "width": 64,
+      "height": 64,
+      "proceduralGenerator": "vesselSvg",
+      "cache": true
+    },
+    "vessel.tier6.nuclearIcebreaker": {
+      "assetId": "vessel.tier6.nuclearIcebreaker",
+      "mode": "procedural",
+      "width": 64,
+      "height": 64,
+      "proceduralGenerator": "vesselSvg",
+      "cache": true
+    },
+    "vessel.tier6.globalExpedition": {
+      "assetId": "vessel.tier6.globalExpedition",
+      "mode": "procedural",
+      "width": 64,
+      "height": 64,
+      "proceduralGenerator": "vesselSvg",
+      "cache": true
+    },
+    "weather.clear": {
+      "assetId": "weather.clear",
+      "mode": "procedural",
+      "width": 48,
+      "height": 48,
+      "proceduralGenerator": "weatherSvg",
+      "cache": true
+    },
+    "weather.cloudy": {
+      "assetId": "weather.cloudy",
+      "mode": "procedural",
+      "width": 48,
+      "height": 48,
+      "proceduralGenerator": "weatherSvg",
+      "cache": true
+    },
+    "weather.storm": {
+      "assetId": "weather.storm",
+      "mode": "procedural",
+      "width": 48,
+      "height": 48,
+      "proceduralGenerator": "weatherSvg",
+      "cache": true
+    },
+    "weather.snow": {
+      "assetId": "weather.snow",
+      "mode": "procedural",
+      "width": 48,
+      "height": 48,
+      "proceduralGenerator": "weatherSvg",
+      "cache": true
+    },
+    "hud.compass": {
+      "assetId": "hud.compass",
+      "mode": "procedural",
+      "width": 120,
+      "height": 120,
+      "proceduralGenerator": "compassSvg",
+      "cache": true
+    },
+    "hud.engineTelegraph": {
+      "assetId": "hud.engineTelegraph",
+      "mode": "procedural",
+      "width": 80,
+      "height": 160,
+      "proceduralGenerator": "compassSvg",
+      "cache": true
+    },
+    "hud.seaWindow": {
+      "assetId": "hud.seaWindow",
+      "mode": "procedural",
+      "width": 160,
+      "height": 90,
+      "proceduralGenerator": "weatherSvg",
+      "cache": true
+    },
+    "port.default": {
+      "assetId": "port.default",
+      "mode": "procedural",
+      "width": 32,
+      "height": 32,
+      "proceduralGenerator": "cargoSvg",
+      "cache": true
+    },
+    "cargo.container": {
+      "assetId": "cargo.container",
+      "mode": "procedural",
+      "width": 40,
+      "height": 40,
+      "proceduralGenerator": "cargoSvg",
+      "cache": true
+    },
+    "cargo.oil": {
+      "assetId": "cargo.oil",
+      "mode": "procedural",
+      "width": 40,
+      "height": 40,
+      "proceduralGenerator": "cargoSvg",
+      "cache": true
+    },
+    "cargo.ore": {
+      "assetId": "cargo.ore",
+      "mode": "procedural",
+      "width": 40,
+      "height": 40,
+      "proceduralGenerator": "cargoSvg",
+      "cache": true
+    }
+  }
+}

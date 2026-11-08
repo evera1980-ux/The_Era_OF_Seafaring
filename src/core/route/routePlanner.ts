@@ -1,33 +1,54 @@
-import { GeoPosition, RouteWaypoint, PlannedRoute, makeNM, makeGameHours, makeUnixMs, Knots, PortInfo } from "../../types";
+import {
+  GeoPosition,
+  RouteWaypoint,
+  PlannedRoute,
+  makeGameHours,
+  makeNM,
+  makeUnixMs,
+  PortInfo,
+  VesselSpec,
+} from "../../types";
 import { calculateDistanceNM } from "../physics/navigation";
+import { calculateTotalFuelRateKgH } from "../physics/fuel";
+import { generateGreatCirclePositions } from "./greatCircle";
 
 /**
- * 依据起点和终点生成大圆航线航路点与航行评估
+ * 依据起点、终点港口和当前船型参数生成球面大圆航线与精确燃油/时间评估
  */
 export function createPassagePlan(
   startPos: GeoPosition,
   destinationPort: PortInfo,
-  cruisingSpeedKn: number
+  cruisingSpeedKn: number,
+  vesselSpec?: VesselSpec
 ): PlannedRoute {
-  const totalDistanceNM = calculateDistanceNM(startPos, destinationPort.position);
+  const directDistanceNM = calculateDistanceNM(startPos, destinationPort.position);
+  const numSteps = Math.min(10, Math.max(2, Math.floor(directDistanceNM / 220)));
+  const gcPositions = generateGreatCirclePositions(
+    startPos,
+    destinationPort.position,
+    numSteps
+  );
+
+  // 计算沿海上航道各航路点的真实累计海上航程 (NM)
+  const fullChain = [startPos, ...gcPositions, destinationPort.position];
+  let rawDistanceNM = 0;
+  for (let i = 0; i < fullChain.length - 1; i++) {
+    rawDistanceNM += calculateDistanceNM(fullChain[i], fullChain[i + 1]);
+  }
+  const totalDistanceNM = makeNM(Math.round(rawDistanceNM * 10) / 10);
+
   const speed = Math.max(4, cruisingSpeedKn);
   const estimatedHours = totalDistanceNM / speed;
 
-  const waypoints: RouteWaypoint[] = [];
-  const numSteps = Math.min(8, Math.max(1, Math.floor(totalDistanceNM / 250)));
-
-  for (let i = 1; i <= numSteps; i++) {
-    const fraction = i / (numSteps + 1);
-    const lat = startPos.latitude + (destinationPort.position.latitude - startPos.latitude) * fraction;
-    const lon = startPos.longitude + (destinationPort.position.longitude - startPos.longitude) * fraction;
-
-    waypoints.push({
-      waypointId: `wp_${i}`,
-      position: { latitude: lat as any, longitude: lon as any },
+  const waypoints: RouteWaypoint[] = gcPositions.map((pos, idx) => {
+    const fraction = (idx + 1) / (gcPositions.length + 1);
+    return {
+      waypointId: `wp_${idx + 1}`,
+      position: pos,
       expectedArrivalGameTime: Date.now() + fraction * estimatedHours * 3600000,
       waypointType: "NAVIGATION",
-    });
-  }
+    };
+  });
 
   waypoints.push({
     waypointId: `dest_${destinationPort.portId}`,
@@ -36,13 +57,20 @@ export function createPassagePlan(
     waypointType: "PORT",
   });
 
+  // 依据船舶实际经济油耗率计算预计总燃油消耗 (t)
+  let estimatedFuelT = Math.round(estimatedHours * 0.02 * 10) / 10;
+  if (vesselSpec) {
+    const hourlyKg = calculateTotalFuelRateKgH(vesselSpec.ecoSpeedKn, vesselSpec);
+    estimatedFuelT = Math.round(((hourlyKg * estimatedHours) / 1000.0) * 100) / 100;
+  }
+
   return {
     routeId: `route_to_${destinationPort.portId}_${Date.now()}`,
     waypoints,
     totalDistanceNM,
     estimatedDurationGameHours: makeGameHours(estimatedHours),
-    estimatedFuelT: Math.round(estimatedHours * 0.05 * 10) / 10,
-    estimatedRisk: totalDistanceNM > 2000 ? 0.6 : 0.2,
+    estimatedFuelT,
+    estimatedRisk: totalDistanceNM > 2000 ? 0.65 : totalDistanceNM > 600 ? 0.35 : 0.15,
     createdAt: makeUnixMs(Date.now()),
   };
 }
