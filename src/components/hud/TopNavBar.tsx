@@ -4,7 +4,25 @@ import { Play, Pause, Globe, Coins, Award, ChevronDown, Languages } from "lucide
 import { GameClockState } from "../../types";
 import { useTranslation } from "../../i18n";
 
-const TIME_SCALES: GameClockState["timeScale"][] = [1, 2, 5, 10, 30, 60];
+const TIME_SCALES: GameClockState["timeScale"][] = [1, 60, 300, 1800, 3600];
+
+const getScaleLabel = (scale: GameClockState["timeScale"], isZh: boolean) => {
+  if (scale === 1) return isZh ? "1×(真实)" : "1×(1:1)";
+  return `${scale}×`;
+};
+
+const getScaleTooltip = (scale: GameClockState["timeScale"], isZh: boolean) => {
+  if (scale === 1) {
+    return isZh
+      ? "真实世界 1:1 实时航速 (1秒 = 1秒)"
+      : "Real-World 1:1 Speed (1s = 1s)";
+  }
+  if (scale === 60) return isZh ? "60倍速 (1秒 = 1分钟)" : "60x Warp (1s = 1 min)";
+  if (scale === 300) return isZh ? "300倍速 (1秒 = 5分钟)" : "300x Warp (1s = 5 min)";
+  if (scale === 1800) return isZh ? "1800倍速 (1秒 = 30分钟)" : "1800x Warp (1s = 30 min)";
+  if (scale === 3600) return isZh ? "3600倍速 (1秒 = 1小时)" : "3600x Warp (1s = 1 hour)";
+  return `${scale}×`;
+};
 
 export const TopNavBar: React.FC = () => {
   const credits = useGameStore((state) => state.playerCredits);
@@ -84,26 +102,27 @@ export const TopNavBar: React.FC = () => {
             onClick={() => setShowSpeedMenu(!showSpeedMenu)}
             className="md:hidden flex items-center space-x-1 bg-bridge-panelLight px-2 py-1 rounded-lg border border-bridge-border text-[11px] text-bridge-highlight font-bold"
           >
-            <span>{gameClock.timeScale}×</span>
+            <span>{getScaleLabel(gameClock.timeScale, language === "zh")}</span>
             <ChevronDown size={11} />
           </button>
 
           {showSpeedMenu && (
             <div
-              className="md:hidden absolute right-0 top-full mt-1 bg-bridge-panel border border-bridge-border rounded-xl p-1 shadow-2xl z-50 flex flex-col space-y-1 min-w-[70px]"
+              className="md:hidden absolute right-0 top-full mt-1 bg-bridge-panel border border-bridge-border rounded-xl p-1 shadow-2xl z-50 flex flex-col space-y-1 min-w-[96px]"
               onClick={() => setShowSpeedMenu(false)}
             >
               {TIME_SCALES.map((scale) => (
                 <button
                   key={scale}
                   onClick={() => setTimeScale(scale)}
-                  className={`py-1 text-[11px] font-bold rounded text-center ${
+                  title={getScaleTooltip(scale, language === "zh")}
+                  className={`py-1 px-2 text-[11px] font-bold rounded text-center ${
                     gameClock.timeScale === scale
                       ? "bg-bridge-accent text-bridge-bg"
                       : "text-bridge-text hover:bg-bridge-panelLight"
                   }`}
                 >
-                  {scale}×
+                  {getScaleLabel(scale, language === "zh")}
                 </button>
               ))}
             </div>
@@ -115,13 +134,14 @@ export const TopNavBar: React.FC = () => {
               <button
                 key={scale}
                 onClick={() => setTimeScale(scale)}
+                title={getScaleTooltip(scale, language === "zh")}
                 className={`px-1.5 py-0.5 rounded text-[10px] transition-all ${
                   gameClock.timeScale === scale && !gameClock.paused
                     ? "bg-bridge-accent text-bridge-bg font-bold shadow-sm"
                     : "text-bridge-textMuted hover:text-white"
                 }`}
               >
-                {scale}×
+                {getScaleLabel(scale, language === "zh")}
               </button>
             ))}
           </div>

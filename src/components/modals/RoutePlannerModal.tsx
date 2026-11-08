@@ -76,13 +76,16 @@ export const RoutePlannerModal: React.FC = () => {
     if (gameClock.paused) {
       togglePause();
     }
-    if (gameClock.timeScale < 5) {
-      setTimeScale(5);
-    }
+    const scaleDesc =
+      gameClock.timeScale === 1
+        ? language === "zh"
+          ? "1× 真实世界 1:1 实时航速"
+          : "1x Real-World 1:1 Speed"
+        : `${gameClock.timeScale}×`;
     const logMsg =
       language === "zh"
-        ? `🧭 大圆航线已加载！目的港：${targetPort.name} (${Math.round(plan.totalDistanceNM)} NM)，自动舵系统已接管航向并全速起航！`
-        : `🧭 Great Circle Passage loaded! Destination: ${targetPort.name} (${Math.round(plan.totalDistanceNM)} NM). Autopilot engaged!`;
+        ? `🧭 海上航线已加载！目的港：${targetPort.name} (${Math.round(plan.totalDistanceNM)} NM)，当前时间倍率：${scaleDesc}。自动舵已接管航向！`
+        : `🧭 Maritime route loaded! Destination: ${targetPort.name} (${Math.round(plan.totalDistanceNM)} NM) at ${scaleDesc}. Autopilot engaged!`;
     addLog(logMsg, "INFO");
     closeModal();
   };
@@ -264,6 +267,47 @@ export const RoutePlannerModal: React.FC = () => {
                       </span>
                       {idx < plan.waypoints.length - 1 && <span>➔</span>}
                     </React.Fragment>
+                  ))}
+                </div>
+              </div>
+
+              {/* 航行时间尺度选择 (1:1 真实航速 vs 远洋时间加速) */}
+              <div className="bg-bridge-panelLight/30 p-2.5 rounded-xl border border-bridge-border space-y-1.5">
+                <div className="flex items-center justify-between text-[10px]">
+                  <span className="text-bridge-textMuted font-bold">
+                    {language === "zh"
+                      ? "⏱️ 航行时间倍率 (1× 为真实世界 1:1 航速)"
+                      : "⏱️ Time Compression (1x = Real-World 1:1 Speed)"}
+                  </span>
+                  <span className="text-amber-400 font-bold">
+                    {language === "zh" ? "预计现实耗时: " : "Real-Time ETA: "}
+                    {(() => {
+                      const realHours = plan.estimatedDurationGameHours / gameClock.timeScale;
+                      if (realHours >= 1) return `${realHours.toFixed(1)} h`;
+                      const realMinutes = realHours * 60;
+                      if (realMinutes >= 1) return `${realMinutes.toFixed(1)} min`;
+                      return `${Math.max(1, Math.round(realMinutes * 60))} s`;
+                    })()}
+                  </span>
+                </div>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {([1, 60, 300, 1800, 3600] as const).map((scale) => (
+                    <button
+                      key={scale}
+                      type="button"
+                      onClick={() => setTimeScale(scale)}
+                      className={`py-1.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
+                        gameClock.timeScale === scale
+                          ? "bg-bridge-accent text-bridge-bg border-white shadow-sm"
+                          : "bg-bridge-panel text-bridge-textMuted border-bridge-border hover:text-white"
+                      }`}
+                    >
+                      {scale === 1
+                        ? language === "zh"
+                          ? "1×(真实)"
+                          : "1×(1:1)"
+                        : `${scale}×`}
+                    </button>
                   ))}
                 </div>
               </div>

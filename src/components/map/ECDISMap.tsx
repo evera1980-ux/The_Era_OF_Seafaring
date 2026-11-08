@@ -608,12 +608,16 @@ const WebGLMapContent: React.FC<{ onWebGLError: () => void }> = ({ onWebGLError 
         </button>
       </div>
 
-      {/* 经纬度位置与最大续航圈指示 */}
-      <div className="absolute top-3 left-2.5 pointer-events-none bg-bridge-panel/85 backdrop-blur border border-bridge-border px-2 py-1 rounded-full text-[9px] sm:text-[10px] font-mono flex items-center space-x-1 sm:space-x-1.5 text-bridge-text z-20 max-w-[42vw] sm:max-w-none truncate">
+      {/* 经纬度位置与最大续航圈指示 (支持4位小数高精度GPS跳字与km/h实时换算) */}
+      <div className="absolute top-3 left-2.5 pointer-events-none bg-bridge-panel/85 backdrop-blur border border-bridge-border px-2.5 py-1 rounded-full text-[9px] sm:text-[10px] font-mono flex items-center space-x-1 sm:space-x-1.5 text-bridge-text z-20 max-w-[56vw] sm:max-w-none truncate">
         <span className="w-1.5 h-1.5 rounded-full bg-bridge-safe animate-pulse shrink-0"></span>
         <span className="text-bridge-highlight font-bold hidden sm:inline">WGS84</span>
         <span className="text-bridge-textMuted truncate">
-          {activeVessel.position.latitude.toFixed(2)}°N, {activeVessel.position.longitude.toFixed(2)}°E
+          {activeVessel.position.latitude.toFixed(4)}°N, {activeVessel.position.longitude.toFixed(4)}°E
+        </span>
+        <span className="text-bridge-border hidden xs:inline">·</span>
+        <span className="text-sky-300 font-bold shrink-0 hidden sm:inline">
+          {(activeVessel.sogKn * 1.852).toFixed(1)} km/h
         </span>
         <span className="text-bridge-border hidden xs:inline">·</span>
         <span className="text-bridge-safe font-bold shrink-0 hidden xs:inline">

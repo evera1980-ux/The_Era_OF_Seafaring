@@ -81,10 +81,10 @@ export const App: React.FC = () => {
     const timer = setInterval(() => {
       if (gameClock.paused) return;
 
-      // 物理/补给消耗步长 (按真实航海小时折算，防止补给过快耗尽)
-      const resourceDtSeconds = 12.0 * gameClock.timeScale;
-      // 海图航行位移时间步长 (使船只在海图上以流畅直观的速度沿航线航行)
-      const chartNavDtSeconds = 140.0 * gameClock.timeScale;
+      // 真实世界 1:1 物理时间步长：每 250ms (0.25秒) 推进 0.25 * timeScale 秒
+      // 1× = 真实世界 1:1 实时航速 (1秒 = 1秒)；60× = 1秒1分；300× = 1秒5分；1800× = 1秒30分；3600× = 1秒1小时
+      const chartNavDtSeconds = 0.25 * gameClock.timeScale;
+      const resourceDtSeconds = Math.min(chartNavDtSeconds, 30.0);
 
       let effectiveHeadingDeg = activeVessel.headingDeg;
       let effectiveTelegraph = activeVessel.engineTelegraph;
@@ -108,7 +108,7 @@ export const App: React.FC = () => {
         let diff = (targetBearingDeg - effectiveHeadingDeg + 360) % 360;
         if (diff > 180) diff -= 360;
 
-        const maxTurnStep = Math.max(24.0, 12.0 * gameClock.timeScale);
+        const maxTurnStep = Math.max(4.0, Math.min(45.0, 2.5 * Math.sqrt(gameClock.timeScale)));
         const turnStep = Math.min(Math.abs(diff), maxTurnStep);
         effectiveHeadingDeg =
           Math.round(((effectiveHeadingDeg + Math.sign(diff) * turnStep + 360) % 360) * 10) / 10;
@@ -143,9 +143,9 @@ export const App: React.FC = () => {
 
       if (!result.grounded && effectiveTelegraph !== "STOP") {
         if (targetWp && targetBearingDeg !== null) {
-          // 自动舵航迹控制模式 (ECDIS Track Control): 自动补偿风压横漂与洋流偏航，沿大圆航线精确航行
+          // 自动舵航迹控制模式 (ECDIS Track Control): 保持船舶真实物理航速沿航道航行
           const cruiseSpeedKn = makeKn(
-            Math.round(Math.max(7.2, nextSogKn) * 10) / 10
+            Math.round(Math.max(6.5, nextSogKn) * 10) / 10
           );
           nextSogKn = cruiseSpeedKn;
           nextCogDeg = Math.round(targetBearingDeg) % 360;
@@ -157,7 +157,7 @@ export const App: React.FC = () => {
             chartNavDtSeconds
           );
 
-          if (navMove.distanceTravelledNM >= distanceToWpNM || distanceToWpNM <= 2.5) {
+          if (navMove.distanceTravelledNM >= distanceToWpNM || distanceToWpNM <= 1.2) {
             // 精确抵达当前航路点
             nextPosition = targetWp.position;
             distanceMovedNM = distanceToWpNM;
@@ -186,7 +186,7 @@ export const App: React.FC = () => {
             distanceMovedNM = navMove.distanceTravelledNM;
           }
         } else if (nextSogKn > 0.1) {
-          // 手动操舵航行模式：同样以海图比例推进船位
+          // 手动操舵航行模式：按当前物理航速与真实时间倍率推进船位
           const manualMove = advancePosition(
             activeVessel.position,
             nextCogDeg,

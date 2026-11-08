@@ -413,7 +413,7 @@ export interface GameClockState {
 
   realTimeMs: number;
 
-  timeScale: 1 | 2 | 5 | 10 | 30 | 60;
+  timeScale: 1 | 2 | 5 | 10 | 30 | 60 | 300 | 1800 | 3600;
 
   paused: boolean;
 }
